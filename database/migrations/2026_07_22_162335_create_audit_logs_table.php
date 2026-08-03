@@ -33,13 +33,12 @@ return new class extends Migration
 
             $table->string('user_agent')->nullable();
 
-            $table->timestamp('performed_at');
+       
 
-            $table->timestamps();
+           $table->timestamps();
 
-            $table->index('user_id','audit_user_idx');
-            $table->index(['record_type','record_id'],'audit_record_idx');
-            $table->index('performed_at','audit_date_idx');
+$table->index('user_id', 'audit_user_idx');
+$table->index(['record_type', 'record_id'], 'audit_record_idx');
         });
     }
 

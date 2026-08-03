@@ -18,6 +18,10 @@ $table->foreignId('order_item_id')
     ->constrained()
     ->cascadeOnDelete();
 
+ $table->foreignId('product_id')
+    ->constrained()
+    ->cascadeOnDelete();   
+
 $table->foreignId('user_id')
     ->constrained()
     ->cascadeOnDelete();

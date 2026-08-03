@@ -9,52 +9,82 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::create('orders', function (Blueprint $table) {
+  public function up(): void
+{
+    Schema::create('orders', function (Blueprint $table) {
 
-            $table->id();
+        $table->id();
 
-            $table->string('order_number', 30)->unique();
+        // Order Info
+        $table->string('order_number', 30)->unique();
 
-            $table->foreignId('user_id')
-                ->constrained()
-                ->cascadeOnDelete();
+        // Customer
+        $table->foreignId('user_id')
+            ->constrained()
+            ->cascadeOnDelete();
 
-            $table->foreignId('customer_address_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
+        // Shipping Address Snapshot
+        $table->string('shipping_full_name');
 
-            $table->decimal('subtotal', 12, 2)->default(0);
+        $table->string('shipping_phone', 20);
 
-            $table->decimal('discount_amount', 12, 2)->default(0);
+        $table->string('shipping_address_line_1');
 
-            $table->decimal('tax_amount', 12, 2)->default(0);
+        $table->string('shipping_address_line_2')->nullable();
 
-            $table->decimal('shipping_amount', 12, 2)->default(0);
+        $table->string('shipping_landmark')->nullable();
 
-            $table->decimal('total_amount', 12, 2);
+        $table->string('shipping_city');
 
-            $table->string('payment_status', 20)
-                ->default('pending');
+        $table->string('shipping_state');
 
-            $table->string('order_status', 20)
-                ->default('pending');
+        $table->string('shipping_country')->default('India');
 
-            $table->text('notes')->nullable();
+        $table->string('shipping_postal_code', 20);
 
-            $table->timestamp('placed_at')->nullable();
+        // Order Amounts
+        $table->decimal('subtotal', 12, 2)->default(0);
 
-            $table->timestamps();
+        $table->decimal('discount_amount', 12, 2)->default(0);
 
-            $table->softDeletes();
+        $table->decimal('tax_amount', 12, 2)->default(0);
 
-            $table->index('user_id', 'order_user_idx');
-            $table->index('order_status', 'order_status_idx');
-            $table->index('payment_status', 'payment_status_idx');
-        });
-    }
+        $table->decimal('shipping_amount', 12, 2)->default(0);
+
+        $table->decimal('total_amount', 12, 2);
+       
+          
+        // Status
+        $table->enum('payment_status', [
+            'pending',
+            'paid',
+            'failed',
+            'refunded',
+            'partially_refunded'
+        ])->default('pending');
+
+        $table->enum('order_status', [
+            'pending',
+            'confirmed',
+            'processing',
+            'shipped',
+            'delivered',
+            'cancelled',
+            'returned'
+        ])->default('pending');
+
+        $table->text('notes')->nullable();
+
+        $table->timestamps();
+
+        $table->softDeletes();
+
+        // Indexes
+        $table->index('user_id', 'order_user_idx');
+        $table->index('payment_status', 'order_payment_status_idx');
+        $table->index('order_status', 'order_status_idx');
+    });
+}
 
     /**
      * Reverse the migrations.

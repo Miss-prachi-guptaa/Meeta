@@ -32,9 +32,6 @@ return new class extends Migration
             $table->decimal('sale_price', 10, 2)
                 ->nullable();
 
-            // Inventory
-            $table->unsignedInteger('stock')
-                ->default(0);
 
             // Physical Details
             $table->decimal('weight', 8, 2)

@@ -26,6 +26,8 @@ return new class extends Migration
                 'return'
             ]);
 
+            $table->unique(['vendor_id', 'type']);
+
             $table->string('address_line_1');
             $table->string('address_line_2')->nullable();
 
@@ -39,7 +41,7 @@ return new class extends Migration
             $table->decimal('latitude', 10, 7)->nullable();
             $table->decimal('longitude', 10, 7)->nullable();
 
-            $table->boolean('is_default')->default(false);
+           
 
             $table->timestamps();
 

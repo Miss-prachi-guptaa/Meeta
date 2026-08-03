@@ -61,7 +61,6 @@ return new class extends Migration
 
             // Indexes
             $table->index('status');
-            $table->index('store_name');
             $table->index('business_name');
         });
     }

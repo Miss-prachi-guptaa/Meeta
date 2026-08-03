@@ -23,7 +23,7 @@ return new class extends Migration
 
             $table->string('mime_type')->nullable();
 
-$table->unsignedBigInteger('file_size')->nullable();
+           $table->unsignedBigInteger('file_size')->nullable();
 
             $table->string('alt_text')->nullable();
 

@@ -10,20 +10,19 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('password_reset_otps', function (Blueprint $table) {
-        $table->id();
-        $table->string('email');
-        $table->string('otp');
-        $table->timestamp('expires_at');
-        $table->timestamps();
-    });
-}
+    {
+        Schema::table('product_images', function (Blueprint $table) {
+            $table->softDeletes()->after('updated_at');
+        });
+    }
+
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('password_reset_otps');
+        Schema::table('product_images', function (Blueprint $table) {
+            $table->dropSoftDeletes();
+        });
     }
 };
