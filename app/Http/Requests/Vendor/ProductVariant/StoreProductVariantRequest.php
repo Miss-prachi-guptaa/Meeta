@@ -2,28 +2,72 @@
 
 namespace App\Http\Requests\Vendor\ProductVariant;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreProductVariantRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine if the user is authorized.
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
+     * Validation Rules
      */
     public function rules(): array
     {
         return [
-            //
+
+            'barcode' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'name' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'price' => [
+                'required',
+                'numeric',
+                'min:0',
+            ],
+
+            'sale_price' => [
+                'nullable',
+                'numeric',
+                'lte:price',
+            ],
+
+            'weight' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'length' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'width' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
+
+            'height' => [
+                'nullable',
+                'numeric',
+                'min:0',
+            ],
         ];
     }
 }

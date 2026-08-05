@@ -16,6 +16,8 @@ use App\Http\Controllers\Admin\AttributeController;
 use App\Http\Controllers\Admin\AttributeValueController;
 use App\Http\Controllers\Vendor\ProductImageController;
 use App\Http\Controllers\Vendor\ProductController;
+use App\Http\Controllers\Vendor\ProductVariantController;
+use App\Http\Controllers\Vendor\VariantAttributeValueController;
 
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -137,4 +139,34 @@ Route::get('/products/{product}/images', [ProductImageController::class, 'index'
 Route::post('/products/{product}/images', [ProductImageController::class, 'store']);
 Route::put('/products/{product}/images/{image}', [ProductImageController::class, 'update']);
 Route::delete('/products/{product}/images/{image}', [ProductImageController::class, 'destroy']);
+
+//Product Variants
+
+Route::get('/products/{product}/variants', [ProductVariantController::class, 'index']);
+Route::get('/products/{product}/variants/{variant}', [ProductVariantController::class, 'show']);
+Route::post('/products/{product}/variants', [ProductVariantController::class, 'store']);
+Route::put('/products/{product}/variants/{variant}', [ProductVariantController::class, 'update']);
+Route::delete('/products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy']);
+
+//Variant Attribute Values
+
+Route::get(
+    '/products/{product}/variants/{variant}/attributes',
+    [VariantAttributeValueController::class, 'index']
+);
+
+Route::post(
+    '/products/{product}/variants/{variant}/attributes',
+    [VariantAttributeValueController::class, 'store']
+);
+
+Route::put(
+    '/products/{product}/variants/{variant}/attributes/{attribute}',
+    [VariantAttributeValueController::class, 'update']
+);
+
+Route::delete(
+    '/products/{product}/variants/{variant}/attributes/{attribute}',
+    [VariantAttributeValueController::class, 'destroy']
+);
     });
