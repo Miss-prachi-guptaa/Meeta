@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -23,6 +24,7 @@ class SubOrder extends Model
         'shipped_at',
         'delivered_at',
         'cancelled_at',
+        'cancellation_reason',
     ];
 
     protected $casts = [
@@ -52,12 +54,8 @@ class SubOrder extends Model
         return $this->hasMany(Shipment::class);
     }
 
-    public function returns()
-    {
-        return $this->hasMany(ReturnModel::class);
-    }
     public function settlement()
-{
-    return $this->hasOne(VendorSettlement::class);
-}
+    {
+        return $this->hasOne(VendorSettlement::class);
+    }
 }

@@ -32,7 +32,6 @@ return new class extends Migration
             $table->decimal('sale_price', 10, 2)
                 ->nullable();
 
-
             // Physical Details
             $table->decimal('weight', 8, 2)
                 ->nullable();
@@ -57,7 +56,6 @@ return new class extends Migration
             // Indexes
             $table->index('product_id');
             $table->index('price');
-            $table->index('stock');
         });
     }
 

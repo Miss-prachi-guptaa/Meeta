@@ -11,37 +11,76 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $totalRevenue = Order::where('payment_status', 'paid')->sum('total_amount');
+        $totalRevenue = Order::where('payment_status', 'paid')
+            ->sum('total_amount');
 
-        $activeVendors = Vendor::where('status', 'approved')->count();
-        $pendingVendors = Vendor::where('status', 'pending')->count();
+        $activeVendors = Vendor::where('status', 'approved')
+            ->count();
+
+        $pendingVendors = Vendor::where('status', 'pending')
+            ->count();
 
         $totalOrders = Order::count();
-        $todayOrders = Order::whereDate('created_at', today())->count();
 
-        $pendingProducts = Product::where('status', 'pending')->count();
+        $todayOrders = Order::whereDate('created_at', today())
+            ->count();
 
-        // Last 7 days revenue for the chart
-        $days = collect(range(6, 0))->map(fn ($i) => now()->subDays($i));
-        $chartLabels = $days->map(fn ($d) => $d->format('D'));
+        $pendingProducts = Product::where('status', 'pending')
+            ->count();
+
+        // Last 7 days
+        $days = collect(range(6, 0))
+            ->map(fn ($i) => now()->subDays($i));
+
+        $chartLabels = $days->map(
+            fn ($day) => $day->format('D')
+        );
+
+        // Revenue chart
         $chartData = $days->map(function ($day) {
             return Order::where('payment_status', 'paid')
                 ->whereDate('created_at', $day->toDateString())
                 ->sum('total_amount');
         });
 
-        $recentOrders = Order::with('user')->latest()->limit(5)->get();
+        // Orders chart
+        $orderChartData = $days->map(function ($day) {
+            return Order::whereDate(
+                'created_at',
+                $day->toDateString()
+            )->count();
+        });
 
-        return view('admin.dashboard', compact(
-            'totalRevenue',
-            'activeVendors',
-            'pendingVendors',
-            'totalOrders',
-            'todayOrders',
-            'pendingProducts',
-            'chartLabels',
-            'chartData',
-            'recentOrders'
-        ));
+        // Recent orders
+        $recentOrders = Order::with('user')
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'stats' => [
+                    'total_revenue' => $totalRevenue,
+                    'active_vendors' => $activeVendors,
+                    'pending_vendors' => $pendingVendors,
+                    'total_orders' => $totalOrders,
+                    'today_orders' => $todayOrders,
+                    'pending_products' => $pendingProducts,
+                ],
+
+                'revenue_chart' => [
+                    'labels' => $chartLabels,
+                    'data' => $chartData,
+                ],
+
+                'orders_chart' => [
+                    'labels' => $chartLabels,
+                    'data' => $orderChartData,
+                ],
+
+                'recent_orders' => $recentOrders,
+            ],
+        ]);
     }
 }

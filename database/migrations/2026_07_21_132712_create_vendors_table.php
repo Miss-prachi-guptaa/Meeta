@@ -39,15 +39,16 @@ return new class extends Migration
 
             // Contact
             $table->string('support_email')->nullable();
-            $table->string('support_phone',20)->nullable();
+            $table->string('support_phone', 20)->nullable();
 
             // Approval
             $table->enum('status', [
+                'draft',
                 'pending',
                 'approved',
                 'rejected',
-                'suspended'
-            ])->default('pending');
+                'suspended',
+            ])->default('draft');
 
             $table->timestamp('approved_at')->nullable();
 

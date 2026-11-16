@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\VendorApprovalService;
 use Illuminate\Http\JsonResponse;
-use App\Http\Requests\RejectVendorRequest;
+use App\Http\Requests\Admin\RejectVendorRequest;
 
 class VendorApprovalController extends Controller
 {
@@ -63,18 +63,16 @@ public function show(int $id): JsonResponse
 
     });
 }
-
 public function reject(
     RejectVendorRequest $request,
     int $id
-): JsonResponse
-{
+): JsonResponse {
     return $this->execute(function () use ($request, $id) {
 
         $vendor = $this->vendorApprovalService->reject(
             $id,
             auth()->user(),
-            $request->reason
+            $request->rejection_reason
         );
 
         return response()->json([
@@ -82,7 +80,6 @@ public function reject(
             'message' => 'Vendor rejected successfully.',
             'data' => $vendor
         ]);
-
     });
 }
 

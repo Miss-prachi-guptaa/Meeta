@@ -26,6 +26,7 @@ class Vendor extends Model
         'support_email',
         'support_phone',
         'status',
+        'submitted_at',
         'rejection_reason',
         'approved_at',
         'approved_by',
@@ -38,6 +39,7 @@ class Vendor extends Model
     {
         return [
             'approved_at' => 'datetime',
+            'submitted_at' => 'datetime',
         ];
     }
 
@@ -106,20 +108,21 @@ class Vendor extends Model
     }
 
     /**
- * Bank Account
- */
-public function bankAccount()
-{
-    return $this->hasOne(VendorBankAccount::class);
-}
+     * Bank Account
+     */
+    public function bankAccount()
+    {
+        return $this->hasOne(VendorBankAccount::class);
+    }
 
-/**
- * Documents
- */
-public function documents()
-{
-    return $this->hasMany(VendorDocument::class);
-}
+    /**
+     * Documents
+     */
+    public function documents()
+    {
+        return $this->hasMany(VendorDocument::class);
+    }
+
     /**
      * Vendor Ledger
      */

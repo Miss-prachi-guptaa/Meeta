@@ -3,8 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\Vendor;
-use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class VendorApprovalRepository
 {
@@ -15,7 +15,8 @@ class VendorApprovalRepository
     {
         return Vendor::with('user')
             ->where('status', 'pending')
-            ->latest()
+            ->orderByDesc('submitted_at')
+            ->orderByDesc('id')
             ->get();
     }
 
@@ -28,7 +29,7 @@ class VendorApprovalRepository
 
             $vendor = Vendor::with('user')->find($vendorId);
 
-            if (!$vendor) {
+            if (! $vendor) {
                 throw new Exception('Vendor not found.');
             }
 
@@ -42,7 +43,7 @@ class VendorApprovalRepository
                 'approved_by' => $adminId,
             ]);
 
-            if (!$vendor->user->hasRole('vendor')) {
+            if (! $vendor->user->hasRole('vendor')) {
                 $vendor->user->assignRole('vendor');
             }
 
@@ -51,74 +52,74 @@ class VendorApprovalRepository
     }
 
     /**
- * Vendor Details
- */
-public function show(int $vendorId)
-{
-    $vendor = Vendor::with([
-        'user',
-        'addresses',
-        'bankAccount',
-        'documents'
-    ])->find($vendorId);
+     * Vendor Details
+     */
+    public function show(int $vendorId)
+    {
+        $vendor = Vendor::with([
+            'user',
+            'addresses',
+            'bankAccount',
+            'documents',
+        ])->find($vendorId);
 
-    if (!$vendor) {
-        throw new \Exception('Vendor not found.');
-    }
-
-    return $vendor;
-}
-
-/**
- * Reject Vendor
- */
-public function reject(int $vendorId, int $adminId, string $reason)
-{
-    return DB::transaction(function () use ($vendorId, $adminId, $reason) {
-
-        $vendor = Vendor::with('user')->find($vendorId);
-
-        if (!$vendor) {
+        if (! $vendor) {
             throw new Exception('Vendor not found.');
         }
 
-        if ($vendor->status !== 'pending') {
-            throw new Exception('Only pending vendors can be rejected.');
+        return $vendor;
+    }
+
+    /**
+     * Reject Vendor
+     */
+    public function reject(int $vendorId, int $adminId, string $reason)
+    {
+        return DB::transaction(function () use ($vendorId, $reason) {
+
+            $vendor = Vendor::with('user')->find($vendorId);
+
+            if (! $vendor) {
+                throw new Exception('Vendor not found.');
+            }
+
+            if ($vendor->status !== 'pending') {
+                throw new Exception('Only pending vendors can be rejected.');
+            }
+
+            $vendor->update([
+                'status' => 'rejected',
+                'rejection_reason' => $reason,
+                'approved_at' => null,
+                'approved_by' => null,
+            ]);
+
+            return [
+                'vendor' => $vendor->fresh(),
+                'reason' => $reason,
+            ];
+        });
+    }
+
+    /**
+     * Suspend Vendor
+     */
+    public function suspend(int $vendorId)
+    {
+        $vendor = Vendor::find($vendorId);
+
+        if (! $vendor) {
+            throw new Exception('Vendor not found.');
         }
 
-       $vendor->update([
-    'status' => 'rejected',
-    'rejection_reason' => $reason,
-    'approved_at' => null,
-    'approved_by' => null,
-]);
+        if ($vendor->status !== 'approved') {
+            throw new Exception('Only approved vendors can be suspended.');
+        }
 
-        return [
-            'vendor' => $vendor->fresh(),
-            'reason' => $reason
-        ];
-    });
-}
+        $vendor->update([
+            'status' => 'suspended',
+        ]);
 
-/**
- * Suspend Vendor
- */
-public function suspend(int $vendorId)
-{
-    $vendor = Vendor::find($vendorId);
-
-    if (!$vendor) {
-        throw new Exception('Vendor not found.');
+        return $vendor->fresh();
     }
-
-    if ($vendor->status !== 'approved') {
-        throw new Exception('Only approved vendors can be suspended.');
-    }
-
-    $vendor->update([
-        'status' => 'suspended'
-    ]);
-
-    return $vendor->fresh();
-}
 }

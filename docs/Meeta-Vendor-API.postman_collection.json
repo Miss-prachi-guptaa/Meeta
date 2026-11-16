@@ -1,0 +1,172 @@
+{
+  "info": {
+    "_postman_id": "ca49b918-a18f-40be-823e-meeta-vendor-api",
+    "name": "Meeta Vendor API",
+    "description": "Frontend-ready Vendor API collection for onboarding, catalogue setup and fulfilment. Product sequence: create product in a specific category, upload 2–3 gallery images, create one variant per sellable Color/Size/Finish combination, map attribute values, create inventory, then submit for admin approval. Login saves the bearer token automatically.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://meeta.acttconnect.com/api" },
+    { "key": "token", "value": "" },
+    { "key": "document_id", "value": "1" },
+    { "key": "product_id", "value": "1" },
+    { "key": "image_id", "value": "1" },
+    { "key": "variant_id", "value": "1" },
+    { "key": "attribute_id", "value": "1" },
+    { "key": "attribute_value_id", "value": "1" },
+    { "key": "category_id", "value": "1" },
+    { "key": "brand_id", "value": "1" },
+    { "key": "sub_order_id", "value": "1" },
+    { "key": "shipment_id", "value": "1" }
+  ],
+  "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        { "name": "Vendor Register", "auth": { "type": "noauth" }, "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"first_name\": \"Meera\",\n  \"last_name\": \"Devi\",\n  \"email\": \"vendor@example.com\",\n  \"phone\": \"9876543210\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"store_name\": \"Meera Handicrafts\",\n  \"business_name\": \"Meera Handicrafts Pvt Ltd\"\n}" }, "url": "{{base_url}}/vendor/register" } },
+        { "name": "Vendor Login", "auth": { "type": "noauth" }, "event": [{ "listen": "test", "script": { "exec": ["const json = pm.response.json();", "const token = json.token || json.data?.token || json.access_token;", "if (token) pm.collectionVariables.set('token', token);"] } }], "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"vendor@example.com\",\n  \"password\": \"password123\"\n}" }, "url": "{{base_url}}/login" } },
+        { "name": "User Profile", "request": { "method": "GET", "url": "{{base_url}}/profile" } },
+        { "name": "Logout", "request": { "method": "POST", "url": "{{base_url}}/logout" } }
+      ]
+    },
+    {
+      "name": "Onboarding",
+      "description": "State contract: draft is editable and submittable; pending is view-only and duplicate submission returns 422; rejected is editable and can be reapplied after corrections; approved uses the vendor dashboard. Required documents are PAN, Aadhaar and cancelled cheque/bank passbook. GET endpoints remain available in pending status so the submitted application can be reviewed, while profile/address/bank/document mutation endpoints are blocked until changes are requested.",
+      "item": [
+        { "name": "Vendor Profile", "request": { "method": "GET", "url": "{{base_url}}/vendor/profile" } },
+        { "name": "Update Vendor Profile", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"store_name\": \"Meera Handicrafts\",\n  \"business_name\": \"Meera Handicrafts Pvt Ltd\",\n  \"gst_number\": \"22AAAAA0000A1Z5\",\n  \"pan_number\": \"AAAAA0000A\",\n  \"description\": \"Authentic Indian crafts\",\n  \"support_email\": \"support@example.com\",\n  \"support_phone\": \"9876543210\"\n}" }, "url": "{{base_url}}/vendor/profile" } },
+        { "name": "Get Address", "request": { "method": "GET", "url": "{{base_url}}/vendor/address" } },
+        { "name": "Create Address", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"type\": \"business\",\n  \"address_line_1\": \"12 Artisan Lane\",\n  \"address_line_2\": \"Near Craft Market\",\n  \"landmark\": \"City Palace\",\n  \"city\": \"Jaipur\",\n  \"state\": \"Rajasthan\",\n  \"country\": \"India\",\n  \"postal_code\": \"302001\"\n}" }, "url": "{{base_url}}/vendor/address" } },
+        { "name": "Update Address", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"type\": \"business\",\n  \"address_line_1\": \"14 Artisan Lane\",\n  \"city\": \"Jaipur\",\n  \"state\": \"Rajasthan\",\n  \"country\": \"India\",\n  \"postal_code\": \"302001\"\n}" }, "url": "{{base_url}}/vendor/address" } },
+        { "name": "Get Bank Account", "request": { "method": "GET", "url": "{{base_url}}/vendor/bank-account" } },
+        { "name": "Create Bank Account", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"account_holder_name\": \"Meera Devi\",\n  \"bank_name\": \"State Bank of India\",\n  \"account_number\": \"12345678901\",\n  \"ifsc_code\": \"SBIN0001234\",\n  \"branch_name\": \"Jaipur Main\",\n  \"account_type\": \"current\"\n}" }, "url": "{{base_url}}/vendor/bank-account" } },
+        { "name": "Update Bank Account", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"account_holder_name\": \"Meera Devi\",\n  \"bank_name\": \"State Bank of India\",\n  \"account_number\": \"12345678901\",\n  \"ifsc_code\": \"SBIN0001234\",\n  \"branch_name\": \"Jaipur Main\",\n  \"account_type\": \"current\"\n}" }, "url": "{{base_url}}/vendor/bank-account" } },
+        { "name": "List Documents", "request": { "method": "GET", "url": "{{base_url}}/vendor/documents" } },
+        { "name": "Upload Document", "request": { "method": "POST", "body": { "mode": "formdata", "formdata": [{ "key": "document_type", "value": "gst", "type": "text" }, { "key": "document_number", "value": "22AAAAA0000A1Z5", "type": "text" }, { "key": "document", "type": "file", "src": [] }] }, "url": "{{base_url}}/vendor/documents" } },
+        { "name": "Update Document", "request": { "method": "PUT", "body": { "mode": "formdata", "formdata": [{ "key": "document_number", "value": "22AAAAA0000A1Z5", "type": "text" }, { "key": "document", "type": "file", "src": [] }] }, "url": "{{base_url}}/vendor/documents/{{document_id}}" } },
+        { "name": "Delete Document", "request": { "method": "DELETE", "url": "{{base_url}}/vendor/documents/{{document_id}}" } },
+        { "name": "Submit or Reapply for Verification", "request": { "method": "POST", "description": "Use case: submit a complete draft application or reapply after admin rejection. Rejected vendors keep the same vendor ID, correct profile/address/bank details, replace every rejected required PAN, Aadhaar or cancelled-cheque document, then call this endpoint. Success changes status to pending and clears the old vendor-level rejection reason. Pending or approved applications and unresolved rejected documents return 422.", "url": "{{base_url}}/vendor/submit" }, "response": [{ "name": "200 Reapplied", "originalRequest": { "method": "POST", "url": "{{base_url}}/vendor/submit" }, "status": "OK", "code": 200, "_postman_previewlanguage": "json", "header": [{ "key": "Content-Type", "value": "application/json" }], "cookie": [], "body": "{\n  \"success\": true,\n  \"message\": \"Vendor profile submitted successfully for verification.\",\n  \"data\": {\n    \"id\": 7,\n    \"status\": \"pending\",\n    \"rejection_reason\": null\n  }\n}" }] }
+      ]
+    },
+    {
+      "name": "Catalog Lookups",
+      "item": [
+        { "name": "Categories", "request": { "method": "GET", "url": "{{base_url}}/vendor/categories" } },
+        { "name": "Brands", "request": { "method": "GET", "url": "{{base_url}}/vendor/brands" } },
+        { "name": "Attributes", "request": { "method": "GET", "url": "{{base_url}}/vendor/attributes" } },
+        { "name": "Attribute Values", "request": { "method": "GET", "url": "{{base_url}}/vendor/attribute-values?attribute_id={{attribute_id}}" } }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Frontend-ready vendor overview. All product, order, revenue, stock and settlement values are scoped to the authenticated vendor. Use range=week or range=month; cancelled sub-orders are excluded from sales. paid_sales is returned separately from booked period_sales.",
+      "item": [
+        {
+          "name": "Vendor Dashboard",
+          "request": {
+            "method": "GET",
+            "description": "Use case: load the complete vendor home screen in one request. Includes KPI summary, product/order status counts, daily sales trend with previous-period comparison, settlement totals, recent orders, low-stock variants, top products and action-required counters.",
+            "url": "{{base_url}}/vendor/dashboard?range=week"
+          },
+          "response": [
+            {
+              "name": "200 Success",
+              "originalRequest": { "method": "GET", "url": "{{base_url}}/vendor/dashboard?range=week" },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Vendor dashboard fetched successfully.\",\n  \"data\": {\n    \"range\": { \"key\": \"week\", \"from\": \"2026-08-24\", \"to\": \"2026-08-25\" },\n    \"vendor\": { \"id\": 4, \"store_name\": \"Prachi Mart\", \"store_slug\": \"prachi-mart\", \"status\": \"approved\" },\n    \"summary\": { \"total_products\": 3, \"active_products\": 3, \"pending_products\": 0, \"total_orders\": 2, \"action_required_orders\": 1, \"period_sales\": 2498, \"paid_sales\": 1299, \"average_order_value\": 1249, \"low_stock_variants\": 1 },\n    \"product_status_counts\": { \"draft\": 0, \"pending\": 0, \"active\": 3, \"rejected\": 0, \"inactive\": 0 },\n    \"order_status_counts\": { \"confirmed\": 1, \"processing\": 0, \"ready_to_ship\": 0, \"shipped\": 0, \"delivered\": 1, \"cancelled\": 0 },\n    \"sales\": { \"range\": \"week\", \"labels\": [\"Mon\", \"Tue\"], \"values\": [1299, 1199], \"total\": 2498, \"previous_total\": 0, \"change_percentage\": null },\n    \"settlements\": { \"pending_amount\": 1100, \"settled_amount\": 900, \"next_available_at\": \"2026-08-30 00:00:00\" },\n    \"recent_orders\": [],\n    \"low_stock\": [],\n    \"top_products\": [],\n    \"attention\": { \"new_orders\": 1, \"orders_to_pack\": 0, \"ready_for_pickup\": 0, \"rejected_products\": 0, \"low_stock_variants\": 1 }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        { "name": "List Products", "request": { "method": "GET", "url": "{{base_url}}/vendor/products?page=1" } },
+        { "name": "Product Detail", "request": { "method": "GET", "url": "{{base_url}}/vendor/products/{{product_id}}" } },
+        { "name": "Create Product", "request": { "method": "POST", "description": "Use case: create shared product information before images and variants. Assign the most specific active child category; price and stock belong to variants, not the product.", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"category_id\": {{category_id}},\n  \"brand_id\": {{brand_id}},\n  \"name\": \"Hand-Painted Terracotta Vase\",\n  \"short_description\": \"Traditional handcrafted vase\",\n  \"description\": \"Made by skilled Indian artisans using traditional methods.\",\n  \"meta_title\": \"Hand-Painted Terracotta Vase\",\n  \"meta_description\": \"Authentic artisan-crafted terracotta vase.\"\n}" }, "url": "{{base_url}}/vendor/products" } },
+        { "name": "Update Product", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"category_id\": {{category_id}},\n  \"name\": \"Hand-Painted Terracotta Vase Updated\",\n  \"short_description\": \"Updated product description\",\n  \"description\": \"Updated detailed description.\"\n}" }, "url": "{{base_url}}/vendor/products/{{product_id}}" } },
+        { "name": "Delete Product", "request": { "method": "DELETE", "url": "{{base_url}}/vendor/products/{{product_id}}" } },
+        { "name": "Submit Product for Approval", "request": { "method": "POST", "url": "{{base_url}}/vendor/products/{{product_id}}/submit" } }
+      ]
+    },
+    {
+      "name": "Product Images",
+      "item": [
+        { "name": "List Images", "request": { "method": "GET", "url": "{{base_url}}/vendor/products/{{product_id}}/images" } },
+        { "name": "Upload Image", "request": { "method": "POST", "body": { "mode": "formdata", "formdata": [{ "key": "image", "type": "file", "src": [] }, { "key": "alt_text", "value": "Terracotta vase", "type": "text" }, { "key": "sort_order", "value": "1", "type": "text" }, { "key": "is_primary", "value": "1", "type": "text" }] }, "url": "{{base_url}}/vendor/products/{{product_id}}/images" } },
+        { "name": "Update Image", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"alt_text\": \"Hand-painted terracotta vase\",\n  \"sort_order\": 1,\n  \"is_primary\": true\n}" }, "url": "{{base_url}}/vendor/products/{{product_id}}/images/{{image_id}}" } },
+        { "name": "Delete Image", "request": { "method": "DELETE", "url": "{{base_url}}/vendor/products/{{product_id}}/images/{{image_id}}" } }
+      ]
+    },
+    {
+      "name": "Product Variants",
+      "item": [
+        { "name": "List Variants", "request": { "method": "GET", "url": "{{base_url}}/vendor/products/{{product_id}}/variants" } },
+        { "name": "Variant Detail", "request": { "method": "GET", "url": "{{base_url}}/vendor/products/{{product_id}}/variants/{{variant_id}}" } },
+        { "name": "Create Variant", "request": { "method": "POST", "description": "Use case: create one purchasable combination, for example Cobalt Blue / Large. SKU must be unique; weight is kg and dimensions are cm. Map its attribute values and inventory in the following folders.", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"barcode\": \"MEETA-VASE-001\",\n  \"name\": \"Cobalt Blue / Large\",\n  \"price\": 3450,\n  \"sale_price\": 3200,\n  \"weight\": 1.8,\n  \"length\": 12,\n  \"width\": 8,\n  \"height\": 8\n}" }, "url": "{{base_url}}/vendor/products/{{product_id}}/variants" } },
+        { "name": "Update Variant", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Large Updated\",\n  \"price\": 3500,\n  \"sale_price\": 3250\n}" }, "url": "{{base_url}}/vendor/products/{{product_id}}/variants/{{variant_id}}" } },
+        { "name": "Delete Variant", "request": { "method": "DELETE", "url": "{{base_url}}/vendor/products/{{product_id}}/variants/{{variant_id}}" } }
+      ]
+    },
+    {
+      "name": "Variant Attributes",
+      "item": [
+        { "name": "List Variant Attributes", "request": { "method": "GET", "url": "{{base_url}}/vendor/products/{{product_id}}/variants/{{variant_id}}/attributes" } },
+        { "name": "Add Variant Attribute", "request": { "method": "POST", "description": "Use case: map one catalogue option value (for example Color: Cobalt Blue or Size: Large) to a variant. Create a separate variant for every sellable option combination; each attribute may appear only once per variant.", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"attribute_id\": {{attribute_id}},\n  \"attribute_value_id\": {{attribute_value_id}}\n}" }, "url": "{{base_url}}/vendor/products/{{product_id}}/variants/{{variant_id}}/attributes" } },
+        { "name": "Update Variant Attribute", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{ \"attribute_value_id\": {{attribute_value_id}} }" }, "url": "{{base_url}}/vendor/products/{{product_id}}/variants/{{variant_id}}/attributes/{{attribute_id}}" } },
+        { "name": "Delete Variant Attribute", "request": { "method": "DELETE", "url": "{{base_url}}/vendor/products/{{product_id}}/variants/{{variant_id}}/attributes/{{attribute_id}}" } }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        { "name": "Get Inventory", "request": { "method": "GET", "url": "{{base_url}}/vendor/products/{{product_id}}/variants/{{variant_id}}/inventory" } },
+        { "name": "Create Inventory", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"quantity\": 20,\n  \"reserved_quantity\": 0,\n  \"minimum_stock\": 5,\n  \"maximum_stock\": 100\n}" }, "url": "{{base_url}}/vendor/products/{{product_id}}/variants/{{variant_id}}/inventory" } },
+        { "name": "Update Inventory", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"quantity\": 25,\n  \"reserved_quantity\": 2,\n  \"minimum_stock\": 5,\n  \"maximum_stock\": 100\n}" }, "url": "{{base_url}}/vendor/products/{{product_id}}/variants/{{variant_id}}/inventory" } }
+      ]
+    },
+    {
+      "name": "Orders & Fulfilment",
+      "description": "Minimum vendor flow: receive an assigned sub-order, accept/reject it, pack it, request dummy third-party pickup, and progress tracking in sequence.",
+      "item": [
+        {
+          "name": "List Vendor Orders",
+          "request": { "method": "GET", "description": "Use case: order dashboard with status counters, search, filtering and pagination. Supported status: confirmed, processing, ready_to_ship, shipped, delivered, cancelled.", "url": "{{base_url}}/vendor/orders?status=confirmed&search=&per_page=15" },
+          "response": [{ "name": "200 Success", "originalRequest": { "method": "GET", "url": "{{base_url}}/vendor/orders" }, "status": "OK", "code": 200, "_postman_previewlanguage": "json", "header": [{ "key": "Content-Type", "value": "application/json" }], "cookie": [], "body": "{\n  \"success\": true,\n  \"message\": \"Vendor orders fetched successfully.\",\n  \"data\": {\n    \"counts\": { \"confirmed\": 2, \"processing\": 1 },\n    \"orders\": { \"current_page\": 1, \"data\": [] }\n  }\n}" }]
+        },
+        {
+          "name": "Vendor Order Detail",
+          "request": { "method": "GET", "description": "Use case: vendor views assigned items, customer delivery address, amounts, payment status, shipment and tracking timeline before fulfilment.", "url": "{{base_url}}/vendor/orders/{{sub_order_id}}" },
+          "response": [{ "name": "200 Success", "originalRequest": { "method": "GET", "url": "{{base_url}}/vendor/orders/{{sub_order_id}}" }, "status": "OK", "code": 200, "_postman_previewlanguage": "json", "header": [{ "key": "Content-Type", "value": "application/json" }], "cookie": [], "body": "{\n  \"success\": true,\n  \"message\": \"Vendor order fetched successfully.\",\n  \"data\": {\n    \"id\": 1,\n    \"sub_order_number\": \"MTA-260824-ABC12345-2\",\n    \"order_status\": \"confirmed\",\n    \"order\": { \"shipping_full_name\": \"Asha Sharma\", \"payment_status\": \"pending\" },\n    \"order_items\": [],\n    \"shipments\": []\n  }\n}" }]
+        },
+        {
+          "name": "Accept Order",
+          "request": { "method": "PATCH", "description": "Use case: vendor confirms that a new order can be fulfilled. Only confirmed orders can move to processing.", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"processing\"\n}" }, "url": "{{base_url}}/vendor/orders/{{sub_order_id}}/status" },
+          "response": [{ "name": "200 Accepted", "originalRequest": { "method": "PATCH", "url": "{{base_url}}/vendor/orders/{{sub_order_id}}/status" }, "status": "OK", "code": 200, "_postman_previewlanguage": "json", "header": [{ "key": "Content-Type", "value": "application/json" }], "cookie": [], "body": "{\n  \"success\": true,\n  \"message\": \"Order accepted successfully.\",\n  \"data\": { \"id\": 1, \"order_status\": \"processing\" }\n}" }]
+        },
+        {
+          "name": "Reject New Order",
+          "request": { "method": "PATCH", "description": "Use case: vendor rejects an unprocessed order; inventory is restored and the customer is notified. A reason of at least 5 characters is mandatory.", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"cancelled\",\n  \"reason\": \"Product is unavailable\"\n}" }, "url": "{{base_url}}/vendor/orders/{{sub_order_id}}/status" },
+          "response": [{ "name": "422 Invalid transition", "originalRequest": { "method": "PATCH", "url": "{{base_url}}/vendor/orders/{{sub_order_id}}/status" }, "status": "Unprocessable Entity", "code": 422, "_postman_previewlanguage": "json", "header": [{ "key": "Content-Type", "value": "application/json" }], "cookie": [], "body": "{\n  \"success\": false,\n  \"message\": \"Validation failed.\",\n  \"errors\": { \"status\": [\"Only a newly confirmed order can be accepted or rejected.\"] }\n}" }]
+        },
+        {
+          "name": "Pack & Request Dummy Pickup",
+          "event": [{ "listen": "test", "script": { "exec": ["const json = pm.response.json();", "if (json.data?.id) pm.collectionVariables.set('shipment_id', json.data.id);"] } }],
+          "request": { "method": "POST", "description": "Use case: after packing an accepted order, vendor submits package dimensions and requests third-party pickup. Current provider is dummy; a tracking number is generated automatically.", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"weight\": 1.8,\n  \"length\": 30,\n  \"width\": 20,\n  \"height\": 15,\n  \"shipping_partner\": \"Dummy Logistics\",\n  \"expected_delivery_at\": \"2026-08-30 18:00:00\",\n  \"remarks\": \"Fragile handicraft\"\n}" }, "url": "{{base_url}}/vendor/orders/{{sub_order_id}}/shipment" },
+          "response": [{ "name": "201 Pickup requested", "originalRequest": { "method": "POST", "url": "{{base_url}}/vendor/orders/{{sub_order_id}}/shipment" }, "status": "Created", "code": 201, "_postman_previewlanguage": "json", "header": [{ "key": "Content-Type", "value": "application/json" }], "cookie": [], "body": "{\n  \"success\": true,\n  \"message\": \"Shipment created and pickup requested successfully.\",\n  \"data\": {\n    \"id\": 1,\n    \"provider\": \"dummy\",\n    \"tracking_number\": \"DUM260824AB12CD34\",\n    \"status\": \"ready_for_pickup\"\n  }\n}" }]
+        },
+        {
+          "name": "Update Dummy Shipment Status",
+          "request": { "method": "PATCH", "description": "Use case: simulate courier webhook updates until a real provider is connected. Required sequence: ready_for_pickup -> picked_up -> in_transit -> out_for_delivery -> delivered.", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"picked_up\",\n  \"location\": \"Jaipur Hub\",\n  \"description\": \"Package collected from vendor\"\n}" }, "url": "{{base_url}}/vendor/shipments/{{shipment_id}}/status" },
+          "response": [{ "name": "200 Status updated", "originalRequest": { "method": "PATCH", "url": "{{base_url}}/vendor/shipments/{{shipment_id}}/status" }, "status": "OK", "code": 200, "_postman_previewlanguage": "json", "header": [{ "key": "Content-Type", "value": "application/json" }], "cookie": [], "body": "{\n  \"success\": true,\n  \"message\": \"Shipment status updated successfully.\",\n  \"data\": { \"id\": 1, \"status\": \"picked_up\", \"tracking\": [] }\n}" }]
+        }
+      ]
+    }
+  ]
+}

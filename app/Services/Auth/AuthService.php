@@ -35,7 +35,7 @@ class AuthService
         ];
     }
 
-    public function login(array $data)
+public function login(array $data)
 {
     $user = $this->authRepository->findUserByEmail($data['email']);
 
@@ -49,6 +49,11 @@ class AuthService
 
     $token = $user->createToken('auth_token')->plainTextToken;
 
+    $user->load('roles');
+    $user->role = $user->getRoleNames()->first();
+
+unset($user->roles);
+
     return [
         'success' => true,
         'message' => 'Login successful.',
@@ -57,6 +62,7 @@ class AuthService
         'status' => 200,
     ];
 }
+
 
 public function forgotPassword(array $data)
 {

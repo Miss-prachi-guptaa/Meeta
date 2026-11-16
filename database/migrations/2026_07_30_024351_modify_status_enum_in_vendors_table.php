@@ -7,6 +7,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement("
             ALTER TABLE vendors
             MODIFY status ENUM(
@@ -21,6 +25,12 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
+        DB::table('vendors')->where('status', 'draft')->update(['status' => 'pending']);
+
         DB::statement("
             ALTER TABLE vendors
             MODIFY status ENUM(

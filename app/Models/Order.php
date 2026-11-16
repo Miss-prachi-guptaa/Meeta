@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -29,6 +30,7 @@ class Order extends Model
         'payment_status',
         'order_status',
         'notes',
+        'cancellation_reason',
     ];
 
     public function user()
@@ -43,7 +45,7 @@ class Order extends Model
 
     public function orderItems()
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->hasManyThrough(OrderItem::class, SubOrder::class);
     }
 
     public function payments()
@@ -53,7 +55,7 @@ class Order extends Model
 
     public function shipments()
     {
-        return $this->hasMany(Shipment::class);
+        return $this->hasManyThrough(Shipment::class, SubOrder::class);
     }
 
     public function returns()

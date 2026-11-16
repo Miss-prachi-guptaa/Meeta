@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Vendor;
 use App\Models\VendorDocument;
 use App\Services\FileUploadService;
+use Illuminate\Validation\ValidationException;
 
 class VendorDocumentRepository
 {
@@ -18,95 +19,105 @@ class VendorDocumentRepository
     }
 
     public function show($userId)
-{
-    $vendor = $this->getVendor($userId);
+    {
+        $vendor = $this->getVendor($userId);
 
-    return VendorDocument::where('vendor_id', $vendor->id)
-        ->latest()
-        ->get();
-}
-
-public function store($userId, array $data)
-{
-    $vendor = $this->getVendor($userId);
-
-    $exists = VendorDocument::where('vendor_id', $vendor->id)
-        ->where('document_type', $data['document_type'])
-        ->exists();
-
-    if ($exists) {
-        throw new \Exception('Document already uploaded.');
+        return VendorDocument::where('vendor_id', $vendor->id)
+            ->latest()
+            ->get();
     }
 
-    $file = $this->fileUploadService->upload(
-        $data['document'],
-        'vendors/documents'
-    );
+    public function store($userId, array $data)
+    {
+        $vendor = $this->getVendor($userId);
+        $this->ensureEditable($vendor);
 
-    return VendorDocument::create([
-        'vendor_id'       => $vendor->id,
-        'document_type'   => $data['document_type'],
-        'document_number' => $data['document_number'] ?? null,
+        $exists = VendorDocument::where('vendor_id', $vendor->id)
+            ->where('document_type', $data['document_type'])
+            ->exists();
 
-        'file_name' => $file['file_name'],
-        'file_path' => $file['file_path'],
-        'mime_type' => $file['mime_type'],
-        'file_size' => $file['file_size'],
-    ])->fresh();
-}
+        if ($exists) {
+            throw new \Exception('Document already uploaded.');
+        }
 
-public function update($userId, $documentId, array $data)
-{
-    $vendor = $this->getVendor($userId);
-
-    $document = VendorDocument::where('vendor_id', $vendor->id)
-        ->where('id', $documentId)
-        ->firstOrFail();
-
-    // Document number update
-    $document->document_number = $data['document_number'] ?? $document->document_number;
-
-    // New file uploaded
-    if (isset($data['document'])) {
-
-        // Delete old file
-        $this->fileUploadService->delete($document->file_path);
-
-        // Upload new file
         $file = $this->fileUploadService->upload(
             $data['document'],
             'vendors/documents'
         );
 
-        $document->file_name = $file['file_name'];
-        $document->file_path = $file['file_path'];
-        $document->mime_type = $file['mime_type'];
-        $document->file_size = $file['file_size'];
+        return VendorDocument::create([
+            'vendor_id' => $vendor->id,
+            'document_type' => $data['document_type'],
+            'document_number' => $data['document_number'] ?? null,
 
-        // Re-verification required
-        $document->status = 'pending';
-        $document->verified_at = null;
-        $document->verified_by = null;
-        $document->remarks = null;
+            'file_name' => $file['file_name'],
+            'file_path' => $file['file_path'],
+            'mime_type' => $file['mime_type'],
+            'file_size' => $file['file_size'],
+        ])->fresh();
     }
 
-    $document->save();
+    public function update($userId, $documentId, array $data)
+    {
+        $vendor = $this->getVendor($userId);
+        $this->ensureEditable($vendor);
 
-    return $document->fresh();
-}
+        $document = VendorDocument::where('vendor_id', $vendor->id)
+            ->where('id', $documentId)
+            ->firstOrFail();
 
-public function delete($userId, $documentId)
-{
-    $vendor = $this->getVendor($userId);
+        // Document number update
+        $document->document_number = $data['document_number'] ?? $document->document_number;
 
-    $document = VendorDocument::where('vendor_id', $vendor->id)
-        ->where('id', $documentId)
-        ->firstOrFail();
+        // New file uploaded
+        if (isset($data['document'])) {
 
-    $this->fileUploadService->delete($document->file_path);
+            // Delete old file
+            $this->fileUploadService->delete($document->file_path);
 
-    $document->delete();
+            // Upload new file
+            $file = $this->fileUploadService->upload(
+                $data['document'],
+                'vendors/documents'
+            );
 
-    return true;
-}
+            $document->file_name = $file['file_name'];
+            $document->file_path = $file['file_path'];
+            $document->mime_type = $file['mime_type'];
+            $document->file_size = $file['file_size'];
+
+            // Re-verification required
+            $document->status = 'pending';
+            $document->verified_at = null;
+            $document->verified_by = null;
+            $document->remarks = null;
+        }
+
+        $document->save();
+
+        return $document->fresh();
+    }
+
+    public function delete($userId, $documentId)
+    {
+        $vendor = $this->getVendor($userId);
+        $this->ensureEditable($vendor);
+
+        $document = VendorDocument::where('vendor_id', $vendor->id)
+            ->where('id', $documentId)
+            ->firstOrFail();
+
+        $this->fileUploadService->delete($document->file_path);
+
+        $document->delete();
+
+        return true;
+    }
+
+    private function ensureEditable(Vendor $vendor): void
+    {
+        if (! in_array($vendor->status, ['draft', 'rejected'], true)) {
+            throw ValidationException::withMessages(['status' => ['Your submitted application cannot be edited unless changes are requested.']]);
+        }
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Category extends Model
 {
@@ -30,10 +31,22 @@ class Category extends Model
     {
         return [
             'sort_order' => 'integer',
-            'is_active'  => 'boolean',
+            'is_active' => 'boolean',
         ];
     }
 
+    public function getPublicImageUrlAttribute(): ?string
+    {
+        if (! $this->image) {
+            return null;
+        }
+
+        if (preg_match('/^https?:\/\//i', $this->image) || str_starts_with($this->image, '/')) {
+            return $this->image;
+        }
+
+        return Storage::disk('public')->url($this->image);
+    }
 
     /**
      * Parent Category
@@ -46,16 +59,16 @@ class Category extends Model
     /**
      * Child Categories
      */
-   public function children()
-{
-    return $this->hasMany(Category::class, 'parent_id')
-        ->orderBy('sort_order');
-}
+    public function children()
+    {
+        return $this->hasMany(Category::class, 'parent_id')
+            ->orderBy('sort_order');
+    }
 
-public function childrenRecursive()
-{
-    return $this->children()->with('childrenRecursive');
-}
+    public function childrenRecursive()
+    {
+        return $this->children()->with('childrenRecursive');
+    }
 
     /**
      * Products

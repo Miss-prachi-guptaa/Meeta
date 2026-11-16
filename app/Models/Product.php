@@ -14,19 +14,20 @@ class Product extends Model
      * Mass Assignable Attributes
      */
     protected $fillable = [
-        'vendor_id',
-        'category_id',
-        'brand_id',
-        'name',
-        'slug',
-        'short_description',
-        'description',
-        'meta_title',
-        'meta_description',
-        'status',
-        'approved_at',
-        'approved_by',
-    ];
+    'vendor_id',
+    'category_id',
+    'brand_id',
+    'name',
+    'slug',
+    'short_description',
+    'description',
+    'meta_title',
+    'meta_description',
+    'status',
+    'approved_at',
+    'approved_by',
+    'rejection_reason',
+];
 
     /**
      * Attribute Casting
@@ -117,6 +118,22 @@ public function images()
     {
         return $query->whereNotNull('approved_at');
     }
+
+    /**
+ * Pending Products
+ */
+public function scopePending($query)
+{
+    return $query->where('status', 'pending');
+}
+
+/**
+ * Rejected Products
+ */
+public function scopeRejected($query)
+{
+    return $query->where('status', 'rejected');
+}
 
     public function reviews()
 {

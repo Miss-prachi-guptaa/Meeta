@@ -11,7 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     /**
      * Mass Assignable Attributes
@@ -46,9 +46,9 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'date_of_birth'     => 'date',
-            'last_login_at'     => 'datetime',
-            'password'          => 'hashed',
+            'date_of_birth' => 'date',
+            'last_login_at' => 'datetime',
+            'password' => 'hashed',
         ];
     }
 
@@ -60,7 +60,7 @@ class User extends Authenticatable
 
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . $this->last_name);
+        return trim($this->first_name.' '.$this->last_name);
     }
 
     /*
@@ -79,6 +79,11 @@ class User extends Authenticatable
     public function addresses()
     {
         return $this->hasMany(CustomerAddress::class);
+    }
+
+    public function preferences()
+    {
+        return $this->hasOne(CustomerPreference::class);
     }
 
     // Shopping Cart
@@ -106,9 +111,9 @@ class User extends Authenticatable
     }
 
     public function payments()
-{
-    return $this->hasMany(Payment::class);
-}
+    {
+        return $this->hasMany(Payment::class);
+    }
 
     // Social Accounts
     public function socialAccounts()
@@ -141,42 +146,41 @@ class User extends Authenticatable
     }
 
     public function approvedProducts()
-{
-    return $this->hasMany(Product::class, 'approved_by');
-}
+    {
+        return $this->hasMany(Product::class, 'approved_by');
+    }
 
     /**
- * Verified Vendor Documents
- */
-public function verifiedVendorDocuments()
-{
-    return $this->hasMany(VendorDocument::class, 'verified_by');
-}
+     * Verified Vendor Documents
+     */
+    public function verifiedVendorDocuments()
+    {
+        return $this->hasMany(VendorDocument::class, 'verified_by');
+    }
 
-/**
- * Verified Vendor Bank Accounts
- */
-public function verifiedVendorBankAccounts()
-{
-    return $this->hasMany(VendorBankAccount::class, 'verified_by');
-}
+    /**
+     * Verified Vendor Bank Accounts
+     */
+    public function verifiedVendorBankAccounts()
+    {
+        return $this->hasMany(VendorBankAccount::class, 'verified_by');
+    }
 
-/**
- * Inventory Transactions
- */
-public function inventoryTransactions()
-{
-    return $this->hasMany(InventoryTransaction::class, 'performed_by');
-}
+    /**
+     * Inventory Transactions
+     */
+    public function inventoryTransactions()
+    {
+        return $this->hasMany(InventoryTransaction::class, 'performed_by');
+    }
 
-public function returns()
-{
-    return $this->hasMany(ReturnModel::class);
-}
+    public function returns()
+    {
+        return $this->hasMany(ReturnModel::class);
+    }
 
-public function processedPayouts()
-{
-    return $this->hasMany(VendorPayout::class, 'processed_by');
-}
-
+    public function processedPayouts()
+    {
+        return $this->hasMany(VendorPayout::class, 'processed_by');
+    }
 }

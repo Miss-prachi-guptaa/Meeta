@@ -11,7 +11,13 @@ class ProductRepository
      */
     public function getAll(int $vendorId)
     {
-        return Product::with(['category', 'brand'])
+        return Product::with([
+            'category',
+            'brand',
+            'images' => fn ($query) => $query
+                ->orderByDesc('is_primary')
+                ->orderBy('sort_order'),
+        ])
             ->where('vendor_id', $vendorId)
             ->latest()
             ->paginate();
@@ -22,7 +28,13 @@ class ProductRepository
      */
     public function findById(int $id, int $vendorId): ?Product
     {
-        return Product::with(['category', 'brand'])
+        return Product::with([
+            'category',
+            'brand',
+            'images' => fn ($query) => $query
+                ->orderByDesc('is_primary')
+                ->orderBy('sort_order'),
+        ])
             ->where('vendor_id', $vendorId)
             ->find($id);
     }

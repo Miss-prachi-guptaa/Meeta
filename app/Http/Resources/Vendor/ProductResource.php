@@ -30,6 +30,17 @@ class ProductResource extends JsonResource
                 'name' => $this->brand->name,
             ] : null,
 
+            // Used by vendor product lists so a seller can identify items quickly.
+            'primary_image' => $this->whenLoaded('images', function () {
+                $image = $this->images->firstWhere('is_primary', true) ?? $this->images->first();
+
+                return $image ? [
+                    'id' => $image->id,
+                    'image_url' => $image->public_url,
+                    'alt_text' => $image->alt_text,
+                ] : null;
+            }),
+
             'name' => $this->name,
             'slug' => $this->slug,
             'short_description' => $this->short_description,

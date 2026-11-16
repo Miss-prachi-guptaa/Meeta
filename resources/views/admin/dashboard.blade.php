@@ -1,100 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Admin Dashboard - MEETA</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-</head>
-<body class="bg-[#0F172A] text-white min-h-screen">
+@extends('layouts.admin')
+@section('title', 'Dashboard')
 
-    <div class="flex">
-        <!-- Sidebar -->
-        <aside class="w-64 min-h-screen bg-[#111827] border-r border-gray-800 p-6">
-            <h1 class="text-xl font-bold text-[#F97316] mb-8">MEETA Admin</h1>
-            <nav class="space-y-2">
-                <a href="{{ route('admin.dashboard') }}" class="block px-3 py-2 rounded bg-[#F97316]/10 text-[#F97316] font-medium">Dashboard</a>
-                <a href="#" class="block px-3 py-2 rounded text-gray-400 hover:bg-gray-800">Vendors</a>
-                <a href="#" class="block px-3 py-2 rounded text-gray-400 hover:bg-gray-800">Products</a>
-                <a href="#" class="block px-3 py-2 rounded text-gray-400 hover:bg-gray-800">Orders</a>
-                <a href="#" class="block px-3 py-2 rounded text-gray-400 hover:bg-gray-800">Payouts</a>
-            </nav>
-        </aside>
+@push('styles')
+<style>
+.dash-header{margin-bottom:28px}.dash-header h1{font-size:36px;line-height:1.1;margin-bottom:7px}.dash-header p{color:var(--text-secondary);font-size:14px}.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin-bottom:28px}.stat-card{padding:24px;display:flex;align-items:center;gap:16px;min-height:126px}.stat-icon{width:52px;height:52px;border-radius:13px;background:var(--terracotta-soft);color:var(--terracotta-dark);display:grid;place-items:center;flex:0 0 52px}.stat-icon svg{width:23px;height:23px}.stat-label{color:var(--text-muted);font-size:12px;letter-spacing:.7px;text-transform:uppercase;margin-bottom:7px}.stat-value{font-size:28px;line-height:1;font-weight:700}.charts-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;margin-bottom:28px}.section-card{padding:26px}.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;margin-bottom:20px}.section-head h2{font-size:20px}.section-head p{font-size:12px;color:var(--text-muted);margin-top:3px}.chart-wrap{height:280px;position:relative}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:760px}th{color:var(--text-muted);font-size:11px;letter-spacing:.7px;text-transform:uppercase;text-align:left;padding:12px 14px;border-bottom:1px solid var(--border-color)}td{padding:15px 14px;border-bottom:1px solid var(--border-color);font-size:13px}tbody tr:last-child td{border-bottom:0}.pill{display:inline-flex;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;text-transform:capitalize;background:var(--neutral-soft);color:var(--neutral)}.pill.paid,.pill.completed,.pill.delivered{background:var(--success-soft);color:var(--success)}.pill.pending,.pill.processing,.pill.confirmed{background:var(--gold-soft);color:var(--gold)}.pill.failed,.pill.cancelled{background:var(--danger-soft);color:var(--danger)}.loading-state,.empty-state{padding:70px 20px;text-align:center;color:var(--text-muted)}.error-state{color:var(--danger)}@media(max-width:1150px){.stats-grid{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}}@media(max-width:620px){.stats-grid{grid-template-columns:1fr}.stat-card{min-height:auto}}
+</style>
+@endpush
 
-        <!-- Main content -->
-        <main class="flex-1 p-8">
-            <h2 class="text-2xl font-bold mb-6">Dashboard</h2>
+@section('content')
+<div class="dash-header"><h1>Dashboard</h1><p>Overview of your marketplace performance and review workload.</p></div>
+<div id="initialLoader" class="card loading-state">Loading dashboard…</div>
+<div id="dashboardArea" hidden>
+ <div class="stats-grid">
+  <div class="card stat-card"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="stat-label">Total Revenue</div><div class="stat-value" id="statRevenue">—</div></div></div>
+  <div class="card stat-card"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div><div><div class="stat-label">Total Orders</div><div class="stat-value" id="statOrders">—</div></div></div>
+  <div class="card stat-card"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></div><div><div class="stat-label">Active Vendors</div><div class="stat-value" id="statActiveVendors">—</div></div></div>
+  <div class="card stat-card"><div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="stat-label">Pending Vendors</div><div class="stat-value" id="statPendingVendors">—</div></div></div>
+ </div>
+ <div class="charts-grid">
+  <div class="card section-card"><div class="section-head"><div><h2>Revenue</h2><p>Paid orders · Last 7 days</p></div></div><div class="chart-wrap"><canvas id="revenueChart"></canvas></div></div>
+  <div class="card section-card"><div class="section-head"><div><h2>Orders</h2><p>Marketplace orders · Last 7 days</p></div></div><div class="chart-wrap"><canvas id="ordersChart"></canvas></div></div>
+ </div>
+ <div class="card section-card"><div class="section-head"><div><h2>Recent Orders</h2><p>Latest marketplace activity</p></div></div><div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Payment</th><th>Order Status</th><th>Date</th></tr></thead><tbody id="recentOrdersBody"></tbody></table></div></div>
+</div>
+@endsection
 
-            <!-- Stat cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <div class="bg-[#1E293B] rounded-lg p-5 border border-gray-800">
-                    <p class="text-gray-400 text-sm">Total Revenue</p>
-                    <p class="text-2xl font-bold mt-1">₹{{ number_format($totalRevenue, 2) }}</p>
-                </div>
-                <div class="bg-[#1E293B] rounded-lg p-5 border border-gray-800">
-                    <p class="text-gray-400 text-sm">Active Vendors</p>
-                    <p class="text-2xl font-bold mt-1">{{ $activeVendors }}</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ $pendingVendors }} pending approval</p>
-                </div>
-                <div class="bg-[#1E293B] rounded-lg p-5 border border-gray-800">
-                    <p class="text-gray-400 text-sm">Total Orders</p>
-                    <p class="text-2xl font-bold mt-1">{{ $totalOrders }}</p>
-                    <p class="text-xs text-gray-500 mt-1">{{ $todayOrders }} today</p>
-                </div>
-                <div class="bg-[#1E293B] rounded-lg p-5 border border-gray-800">
-                    <p class="text-gray-400 text-sm">Pending Product Approvals</p>
-                    <p class="text-2xl font-bold mt-1">{{ $pendingProducts }}</p>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Chart -->
-                <div class="lg:col-span-2 bg-[#1E293B] rounded-lg p-5 border border-gray-800">
-                    <p class="font-semibold mb-4">Revenue (Last 7 Days)</p>
-                    <canvas id="revenueChart" height="120"></canvas>
-                </div>
-
-                <!-- Recent orders -->
-                <div class="bg-[#1E293B] rounded-lg p-5 border border-gray-800">
-                    <p class="font-semibold mb-4">Recent Orders</p>
-                    <div class="space-y-3">
-                        @forelse ($recentOrders as $order)
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <p class="text-sm font-medium">{{ $order->user->name ?? 'Guest' }}</p>
-                                    <p class="text-xs text-gray-500">{{ $order->order_number }}</p>
-                                </div>
-                                <p class="text-sm font-semibold text-[#F97316]">₹{{ number_format($order->total_amount, 2) }}</p>
-                            </div>
-                        @empty
-                            <p class="text-sm text-gray-500">No orders yet.</p>
-                        @endforelse
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <script>
-        const ctx = document.getElementById('revenueChart');
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: {!! json_encode($chartLabels) !!},
-                datasets: [{
-                    label: 'Revenue (₹)',
-                    data: {!! json_encode($chartData) !!},
-                    backgroundColor: '#F97316',
-                }]
-            },
-            options: {
-                scales: {
-                    x: { ticks: { color: '#9CA3AF' }, grid: { color: '#1F2937' } },
-                    y: { ticks: { color: '#9CA3AF' }, grid: { color: '#1F2937' } }
-                },
-                plugins: { legend: { labels: { color: '#9CA3AF' } } }
-            }
-        });
-    </script>
-</body>
-</html>
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(()=>{const token=localStorage.getItem('meeta_token'),loader=document.getElementById('initialLoader'),area=document.getElementById('dashboardArea'),tbody=document.getElementById('recentOrdersBody');const money=v=>'₹'+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2}),date=v=>v?new Date(v).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—',esc=v=>{const n=document.createElement('div');n.textContent=v==null?'':String(v);return n.innerHTML},pill=v=>{const k=String(v||'unknown').toLowerCase();return `<span class="pill ${k}">${esc(v||'—')}</span>`};function chart(canvas,type,label,labels,values){const css=getComputedStyle(document.documentElement),color=css.getPropertyValue('--terracotta').trim(),muted=css.getPropertyValue('--text-muted').trim(),border=css.getPropertyValue('--border-color').trim();new Chart(canvas,{type,data:{labels,datasets:[{label,data:values,borderColor:color,backgroundColor:type==='line'?'rgba(193,98,45,.16)':'rgba(193,98,45,.72)',fill:type==='line',tension:.35,borderWidth:2.5,borderRadius:6,maxBarThickness:34}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:muted}},y:{beginAtZero:true,grid:{color:border},ticks:{color:muted,precision:0}}}}})}async function load(){try{const r=await fetch('/api/admin/dashboard',{headers:{Authorization:'Bearer '+token,Accept:'application/json'}});if(r.status===401||r.status===419){localStorage.removeItem('meeta_token');location.href='/admin/login';return}const j=await r.json();if(!r.ok||!j.success)throw Error(j.message||'Dashboard could not be loaded.');const d=j.data,s=d.stats||{};document.getElementById('statRevenue').textContent=money(s.total_revenue);document.getElementById('statOrders').textContent=Number(s.total_orders||0).toLocaleString('en-IN');document.getElementById('statActiveVendors').textContent=Number(s.active_vendors||0).toLocaleString('en-IN');document.getElementById('statPendingVendors').textContent=Number(s.pending_vendors||0).toLocaleString('en-IN');const orders=d.recent_orders||[];tbody.innerHTML=orders.length?orders.map(o=>`<tr><td>#${esc(o.order_number||o.id)}</td><td>${esc(o.shipping_full_name||o.user?.full_name||'—')}</td><td>${money(o.total_amount)}</td><td>${pill(o.payment_status)}</td><td>${pill(o.order_status)}</td><td>${date(o.created_at)}</td></tr>`).join(''):'<tr><td colspan="6" class="empty-state">No recent orders yet.</td></tr>';loader.hidden=true;area.hidden=false;chart(document.getElementById('revenueChart'),'line','Revenue',d.revenue_chart?.labels||[],d.revenue_chart?.data||[]);chart(document.getElementById('ordersChart'),'bar','Orders',d.orders_chart?.labels||[],d.orders_chart?.data||[])}catch(e){loader.classList.add('error-state');loader.textContent=e.message}}load()})();
+</script>
+@endpush

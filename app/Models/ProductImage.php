@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class ProductImage extends Model
 {
@@ -31,6 +32,19 @@ class ProductImage extends Model
             'sort_order' => 'integer',
             'is_primary' => 'boolean',
         ];
+    }
+
+    public function getPublicUrlAttribute(): ?string
+    {
+        if (! $this->image_url) {
+            return null;
+        }
+
+        if (preg_match('/^https?:\/\//i', $this->image_url) || str_starts_with($this->image_url, '/')) {
+            return $this->image_url;
+        }
+
+        return Storage::disk('public')->url($this->image_url);
     }
 
     /*
