@@ -90,6 +90,22 @@ Route::prefix('admin')->group(function () {
         return view('admin.products.index');
     });
 
+    Route::get('/orders', function () {
+        return view('admin.orders.index');
+    });
+
+    Route::get('/payouts', function () {
+        return view('admin.payouts.index');
+    });
+
+    Route::get('/commissions', function () {
+        return view('admin.commissions.index');
+    });
+
+    Route::get('/disputes', function () {
+        return view('admin.disputes.index');
+    });
+
     // If you don't already have these two, add them too —
     // they're referenced by the sidebar/layout guard:
     Route::get('/login', function () {
