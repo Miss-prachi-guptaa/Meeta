@@ -108,6 +108,28 @@ Route::middleware(['auth:sanctum', 'role:admin'])
         Route::get('/products/{product}', [AdminProductApprovalController::class, 'show']);
         Route::post('/products/{product}/approve', [AdminProductApprovalController::class, 'approve']);
         Route::post('/products/{product}/reject', [AdminProductApprovalController::class, 'reject']);
+
+        // Orders & Sub-Orders SLA Monitoring
+        Route::get('/orders', [\App\Http\Controllers\Admin\OrderController::class, 'index']);
+        Route::get('/orders/{id}', [\App\Http\Controllers\Admin\OrderController::class, 'show']);
+        Route::post('/sub-orders/{id}/auto-cancel', [\App\Http\Controllers\Admin\OrderController::class, 'autoCancelSubOrder']);
+
+        // Commission Rules Management
+        Route::get('/commissions', [\App\Http\Controllers\Admin\CommissionController::class, 'index']);
+        Route::post('/commissions', [\App\Http\Controllers\Admin\CommissionController::class, 'store']);
+        Route::delete('/commissions/{id}', [\App\Http\Controllers\Admin\CommissionController::class, 'destroy']);
+
+        // Dispute & Return Resolution Management
+        Route::get('/disputes', [\App\Http\Controllers\Admin\DisputeController::class, 'index']);
+        Route::get('/disputes/{id}', [\App\Http\Controllers\Admin\DisputeController::class, 'show']);
+        Route::post('/disputes/{id}/resolve-customer', [\App\Http\Controllers\Admin\DisputeController::class, 'resolveCustomer']);
+        Route::post('/disputes/{id}/resolve-vendor', [\App\Http\Controllers\Admin\DisputeController::class, 'resolveVendor']);
+
+        // Payout Batches & Settlements Management
+        Route::get('/payouts', [\App\Http\Controllers\Admin\PayoutController::class, 'index']);
+        Route::get('/payouts/eligible', [\App\Http\Controllers\Admin\PayoutController::class, 'eligibleBatch']);
+        Route::post('/payouts/batch/process', [\App\Http\Controllers\Admin\PayoutController::class, 'processBatch']);
+        Route::post('/payouts/{id}/retry', [\App\Http\Controllers\Admin\PayoutController::class, 'retryPayout']);
     });
 
 Route::middleware('auth:sanctum')
