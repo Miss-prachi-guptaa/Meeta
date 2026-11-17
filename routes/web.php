@@ -51,6 +51,18 @@ Route::get('/vendor/orders/{subOrder}', function ($subOrder) {
     return view('vendor.orders.show', ['subOrderId' => $subOrder]);
 })->name('vendor.orders.show');
 
+Route::get('/vendor/payouts', function () {
+    return view('vendor.payouts.index');
+})->name('vendor.payouts.index');
+
+Route::get('/vendor/returns', function () {
+    return view('vendor.returns.index');
+})->name('vendor.returns.index');
+
+Route::get('/vendor/profile-settings', function () {
+    return view('vendor.profile');
+})->name('vendor.store.edit');
+
 Route::post('/vendor/logout', function () {
     Auth::logout();
     request()->session()->invalidate();

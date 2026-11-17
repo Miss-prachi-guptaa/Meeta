@@ -48,6 +48,13 @@ $navItems = [
 <line x1="2" y1="10" x2="22" y2="10" />',
 ],
 [
+'label' => 'Returns',
+'route' => 'vendor.returns.index',
+'icon' => '
+<path d="M9 14 4 9l5-5" />
+<path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11" />',
+],
+[
 'label' => 'Settings',
 'route' => 'vendor.settings.index',
 'icon' => '
