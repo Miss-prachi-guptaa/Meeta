@@ -81,7 +81,10 @@ class OrderController extends Controller
                     $order->update(['order_status' => 'cancelled', 'cancelled_at' => now(), 'cancellation_reason' => $data['reason']]);
                     $this->lifecycle->notifyCustomer($order, 'Item order cancelled', "{$order->sub_order_number} was cancelled by the vendor. Reason: {$data['reason']}", 'order_cancelled');
                 } else {
-                    $order->update(['order_status' => 'processing']);
+                    $order->update([
+                        'order_status' => 'processing',
+                        'confirmed_at' => now(),
+                    ]);
                     $this->lifecycle->notifyCustomer($order, 'Order is being prepared', "{$order->sub_order_number} has been accepted and is being prepared.", 'order_processing');
                 }
 

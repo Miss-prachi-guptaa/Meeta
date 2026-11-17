@@ -37,6 +37,9 @@ use App\Http\Controllers\Vendor\VendorOnboardingController;
 use App\Http\Controllers\Vendor\VendorProfileController;
 use Illuminate\Support\Facades\Route;
 
+// Public Payment Webhook
+Route::post('/payments/webhook', [\App\Http\Controllers\Api\PaymentWebhookController::class, 'handle']);
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -262,8 +265,19 @@ Route::middleware('auth:sanctum')
         Route::get('/orders', [VendorOrderController::class, 'index']);
         Route::get('/orders/{subOrder}', [VendorOrderController::class, 'show']);
         Route::patch('/orders/{subOrder}/status', [VendorOrderController::class, 'updateStatus']);
+        Route::post('/orders/{subOrder}/confirm', [VendorOrderController::class, 'updateStatus']);
         Route::post('/orders/{subOrder}/shipment', [VendorOrderController::class, 'createShipment']);
         Route::patch('/shipments/{shipment}/status', [VendorOrderController::class, 'updateShipmentStatus']);
+
+        // Vendor Returns & Claims
+        Route::get('/returns', [\App\Http\Controllers\Vendor\ReturnController::class, 'index']);
+        Route::get('/returns/{id}', [\App\Http\Controllers\Vendor\ReturnController::class, 'show']);
+        Route::post('/returns/{id}/respond', [\App\Http\Controllers\Vendor\ReturnController::class, 'respond']);
+
+        // Vendor Financial Ledger & Settlements
+        Route::get('/finance/overview', [\App\Http\Controllers\Vendor\FinanceController::class, 'overview']);
+        Route::get('/finance/ledger', [\App\Http\Controllers\Vendor\FinanceController::class, 'ledger']);
+        Route::get('/finance/payouts', [\App\Http\Controllers\Vendor\FinanceController::class, 'payouts']);
     });
 
 // Customer Public Routes
@@ -309,6 +323,10 @@ Route::middleware('auth:sanctum')->prefix('customer')->group(function () {
     Route::get('/orders/{order}/tracking', [OrderController::class, 'tracking']);
     Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice']);
     Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel']);
+
+    // Customer Returns
+    Route::get('/returns', [\App\Http\Controllers\Customer\ReturnController::class, 'index']);
+    Route::post('/sub-orders/{subOrder}/return', [\App\Http\Controllers\Customer\ReturnController::class, 'store']);
 
     Route::get('/reviews', [ReviewController::class, 'index']);
     Route::post('/reviews', [ReviewController::class, 'store']);
