@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory;
 use App\Models\OrderItem;
 use App\Models\SubOrder;
+use App\Models\ReturnModel;
 use App\Models\Vendor;
+use App\Models\VendorLedger;
+use App\Models\VendorPayout;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -90,6 +93,14 @@ class DashboardController extends Controller
                 'minimum_stock' => $inventory->minimum_stock,
             ]);
 
+                $latestLedger = VendorLedger::where('vendor_id', $vendor->id)->latest()->first();
+        $currentWalletBalance = (float) ($latestLedger ? $latestLedger->balance_after : 0);
+        $totalPaidOut = (float) VendorPayout::where('vendor_id', $vendor->id)->where('status', 'completed')->sum('amount');
+
+        $pendingReturnsCount = ReturnModel::whereHas('items.orderItem.subOrder', function ($q) use ($vendor) {
+            $q->where('vendor_id', $vendor->id);
+        })->whereIn('status', ['pending', 'requested'])->count();
+
         $settlements = $vendor->settlements();
         $paidSales = (float) $vendor->subOrders()
             ->where('order_status', '!=', 'cancelled')
@@ -119,6 +130,9 @@ class DashboardController extends Controller
                     'paid_sales' => round($paidSales, 2),
                     'average_order_value' => $salesOrders->isEmpty() ? 0 : round($currentSales / $salesOrders->count(), 2),
                     'low_stock_variants' => $lowStockCount,
+                    'current_balance' => round($currentWalletBalance, 2),
+                    'total_paid_out' => round($totalPaidOut, 2),
+                    'pending_returns' => $pendingReturnsCount,
                 ],
                 // Legacy top-level fields keep the current dashboard and external integrations compatible.
                 'total_products' => (int) $productCounts->sum(),
@@ -131,6 +145,8 @@ class DashboardController extends Controller
                 'settlements' => [
                     'pending_amount' => round((float) (clone $settlements)->whereIn('status', ['pending', 'available'])->sum('net_amount'), 2),
                     'settled_amount' => round((float) (clone $settlements)->where('status', 'settled')->sum('net_amount'), 2),
+                    'current_wallet_balance' => round($currentWalletBalance, 2),
+                    'total_paid_out' => round($totalPaidOut, 2),
                     'next_available_at' => (clone $settlements)->whereIn('status', ['pending', 'available'])->whereNotNull('available_at')->min('available_at'),
                 ],
                 'recent_orders' => $recentOrders,
@@ -142,6 +158,7 @@ class DashboardController extends Controller
                     'ready_for_pickup' => (int) ($orderCounts['ready_to_ship'] ?? 0),
                     'rejected_products' => (int) ($productCounts['rejected'] ?? 0),
                     'low_stock_variants' => $lowStockCount,
+                    'pending_returns' => $pendingReturnsCount,
                 ],
             ],
         ]);
