@@ -92,4 +92,46 @@ class VendorCatalogController extends Controller
       'data' => $values,
     ]);
   }
+  public function storeAttribute(\Illuminate\Http\Request $request)
+  {
+    $validated = $request->validate([
+      'name' => 'required|string|max:100',
+    ]);
+
+    $name = trim($validated['name']);
+    $slug = \Illuminate\Support\Str::slug($name);
+
+    $attribute = Attribute::firstOrCreate(
+      ['slug' => $slug],
+      ['name' => $name, 'status' => 'active']
+    );
+
+    return response()->json([
+      'success' => true,
+      'message' => 'Attribute saved successfully.',
+      'data' => $attribute,
+    ]);
+  }
+
+  public function storeAttributeValue(\Illuminate\Http\Request $request)
+  {
+    $validated = $request->validate([
+      'attribute_id' => 'required|exists:attributes,id',
+      'value' => 'required|string|max:100',
+    ]);
+
+    $value = trim($validated['value']);
+    $slug = \Illuminate\Support\Str::slug($value);
+
+    $attrValue = AttributeValue::firstOrCreate(
+      ['attribute_id' => $validated['attribute_id'], 'slug' => $slug],
+      ['value' => $value, 'status' => 'active', 'sort_order' => 0]
+    );
+
+    return response()->json([
+      'success' => true,
+      'message' => 'Attribute value saved successfully.',
+      'data' => $attrValue,
+    ]);
+  }
 }

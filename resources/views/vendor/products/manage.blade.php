@@ -610,6 +610,7 @@
     <table>
       <thead>
         <tr>
+          <th style="width:50px;">Photo</th>
           <th>SKU</th>
           <th>Barcode</th>
           <th>Price</th>
@@ -620,7 +621,7 @@
       </thead>
       <tbody id="variantsTableBody">
         <tr>
-          <td colspan="6" class="loading-state">Loading variants...</td>
+          <td colspan="7" class="loading-state">Loading variants...</td>
         </tr>
       </tbody>
     </table>
@@ -686,7 +687,10 @@
 
     <div class="form-row" id="attrSelectRow">
       <div class="form-group">
-        <label>Attribute</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <label style="margin-bottom:0;">Attribute</label>
+          <button type="button" onclick="toggleNewAttributeBox()" style="background:none; border:none; color:var(--terracotta); font-size:11.5px; font-weight:600; cursor:pointer;">+ Create New</button>
+        </div>
         <select id="attrAttributeSelect">
           <option value="">Loading attributes...</option>
         </select>
@@ -696,7 +700,10 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Value</label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <label style="margin-bottom:0;">Value</label>
+          <button type="button" id="createNewValLink" onclick="toggleNewValueBox()" style="background:none; border:none; color:var(--terracotta); font-size:11.5px; font-weight:600; cursor:pointer; display:none;">+ Create New</button>
+        </div>
         <select id="attrValueSelect" disabled>
           <option value="">Select attribute first</option>
         </select>
@@ -704,6 +711,26 @@
           <span>Failed to load attribute values.</span>
           <span class="retry-link" onclick="loadAttributeValueOptions()">Retry</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Inline create new attribute box -->
+    <div id="newAttributeBox" style="display:none; background:var(--bg-card-hover); padding:12px; border-radius:8px; margin-bottom:14px; border:1px solid var(--border-color);">
+      <div style="font-weight:600; font-size:12.5px; margin-bottom:6px;">Create Custom Attribute (e.g. Fabric, Sleeve Length, Weight)</div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="newAttributeNameInput" placeholder="Attribute name..." style="flex:1;">
+        <button type="button" class="btn btn-terracotta btn-sm" onclick="saveNewAttribute()">Save</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="toggleNewAttributeBox()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Inline create new attribute value box -->
+    <div id="newValueBox" style="display:none; background:var(--bg-card-hover); padding:12px; border-radius:8px; margin-bottom:14px; border:1px solid var(--border-color);">
+      <div style="font-weight:600; font-size:12.5px; margin-bottom:6px;">Create Custom Value (e.g. Pure Cotton, 3/4th Sleeve)</div>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="newValueNameInput" placeholder="Option value..." style="flex:1;">
+        <button type="button" class="btn btn-terracotta btn-sm" onclick="saveNewValue()">Save</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="toggleNewValueBox()">Cancel</button>
       </div>
     </div>
     <div class="form-error" id="attrFormError" style="display:none;"></div>
@@ -751,6 +778,38 @@
     <div class="modal-actions">
       <button class="btn btn-outline" onclick="closeSubmitModal()">Cancel</button>
       <button class="btn btn-terracotta" id="confirmSubmitBtn">Submit</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Variant Photos Modal -->
+<div class="modal-overlay" id="variantPhotosModal">
+  <div class="modal-box modal-wide">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+      <h3>Variant Photos</h3>
+      <span class="badge status-active" id="varPhotoSkuBadge" style="font-size:12px;"></span>
+    </div>
+    <p class="modal-sub">Upload or link specific photos for this variant (e.g. when customer chooses this color/style).</p>
+
+    <!-- Upload for this variant -->
+    <div style="background:var(--bg-card-hover); padding:14px; border-radius:10px; border:1.5px dashed var(--border-color-strong); margin-bottom:16px;">
+      <div style="font-size:13px; font-weight:600; margin-bottom:6px;">Upload New Photos for this Variant:</div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <input type="file" id="varImageFileInput" accept="image/*" multiple style="flex:1; min-width:200px;">
+        <input type="text" id="varImageAltInput" placeholder="Alt text..." style="max-width:180px;">
+        <button class="btn btn-terracotta btn-sm" id="uploadVarImagesBtn">Upload</button>
+      </div>
+    </div>
+
+    <!-- Assigned images list -->
+    <div style="font-weight:600; font-size:13.5px; margin-bottom:10px;">Photos assigned to this variant:</div>
+    <div id="varImagesGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:12px; min-height:90px; margin-bottom:18px;">
+      <div class="loading-state">Loading...</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeVariantPhotosModal()">Done</button>
     </div>
   </div>
 </div>
@@ -1040,6 +1099,190 @@
       if (json.success) {
         showToast('Primary image updated.');
         await loadImages();
+
+  // ==================== CUSTOM ATTRIBUTES & VALUES ====================
+  function toggleNewAttributeBox() {
+    const box = document.getElementById('newAttributeBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') document.getElementById('newAttributeNameInput').focus();
+  }
+
+  function toggleNewValueBox() {
+    const box = document.getElementById('newValueBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') document.getElementById('newValueNameInput').focus();
+  }
+
+  async function saveNewAttribute() {
+    const input = document.getElementById('newAttributeNameInput');
+    const name = input.value.trim();
+    if (!name) { showToast('Please enter an attribute name.', true); return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/attributes`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ name })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to save attribute.');
+
+      showToast('Custom attribute created successfully!');
+      input.value = '';
+      toggleNewAttributeBox();
+
+      await loadAttributeOptions();
+      if (json.data && json.data.id) {
+        document.getElementById('attrAttributeSelect').value = json.data.id;
+        populateValueDropdown();
+      }
+    } catch (e) {
+      showToast(e.message || 'Error creating attribute.', true);
+    }
+  }
+
+  async function saveNewValue() {
+    const attrId = document.getElementById('attrAttributeSelect').value;
+    if (!attrId) { showToast('Please select an attribute first.', true); return; }
+
+    const input = document.getElementById('newValueNameInput');
+    const value = input.value.trim();
+    if (!value) { showToast('Please enter a value.', true); return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/attribute-values`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ attribute_id: attrId, value })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to save attribute value.');
+
+      showToast('Custom value created successfully!');
+      input.value = '';
+      toggleNewValueBox();
+
+      await loadAttributeValueOptions();
+      if (json.data && json.data.id) {
+        document.getElementById('attrValueSelect').value = json.data.id;
+      }
+    } catch (e) {
+      showToast(e.message || 'Error creating value.', true);
+    }
+  }
+
+  // Hook populateValueDropdown to show/hide "+ Create New" value link
+  const originalPopulate = populateValueDropdown;
+  populateValueDropdown = function() {
+    originalPopulate();
+    const attrSel = document.getElementById('attrAttributeSelect');
+    const createValLink = document.getElementById('createNewValLink');
+    if (attrSel.value) {
+      createValLink.style.display = 'inline-block';
+    } else {
+      createValLink.style.display = 'none';
+    }
+  };
+
+  // ==================== VARIANT PHOTOS MODAL ====================
+  let activePhotoVariantId = null;
+
+  async function openVariantImagesModal(variantId) {
+    activePhotoVariantId = variantId;
+    const v = findVariantById(variantId);
+    document.getElementById('varPhotoSkuBadge').textContent = v ? (v.sku || ('Variant #' + v.id)) : '';
+    document.getElementById('variantPhotosModal').classList.add('open');
+    await loadVariantPhotos();
+  }
+
+  function closeVariantPhotosModal() {
+    activePhotoVariantId = null;
+    document.getElementById('variantPhotosModal').classList.remove('open');
+    loadVariants(); // Refresh variant list to update photo thumbnail
+  }
+
+  async function loadVariantPhotos() {
+    const grid = document.getElementById('varImagesGrid');
+    grid.innerHTML = '<div class="loading-state">Loading...</div>';
+
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images`, { headers: authHeaders() });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to load photos.');
+
+      const allImgs = json.data.data || json.data || [];
+      const varImgs = allImgs.filter(img => String(img.product_variant_id) === String(activePhotoVariantId));
+
+      if (!varImgs.length) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1; padding:20px 0;">No photos assigned to this variant yet. Upload one above.</div>';
+        return;
+      }
+
+      grid.innerHTML = varImgs.map(img => `
+        <div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; background:var(--bg-card); position:relative;">
+          <img src="${resolveImageSrc(img.image_url)}" style="width:100%; height:110px; object-fit:cover; display:block;" alt="">
+          <div style="padding:6px; text-align:center;">
+            <button class="btn btn-danger btn-sm" style="width:100%; font-size:11px; padding:3px 6px;" onclick="deleteVariantImage(${img.id})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">${e.message || 'Failed to load photos.'}</div>`;
+    }
+  }
+
+  document.getElementById('uploadVarImagesBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('varImageFileInput');
+    if (!fileInput.files || !fileInput.files.length) {
+      showToast('Please select at least one photo.', true);
+      return;
+    }
+
+    const formData = new FormData();
+    [...fileInput.files].forEach(f => formData.append('images[]', f));
+    formData.append('product_variant_id', activePhotoVariantId);
+    const alt = document.getElementById('varImageAltInput').value.trim();
+    if (alt) formData.append('alt_text', alt);
+
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
+        body: formData
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast('Photo uploaded for variant!');
+        fileInput.value = '';
+        document.getElementById('varImageAltInput').value = '';
+        await loadVariantPhotos();
+      } else {
+        showToast(json.message || 'Upload failed.', true);
+      }
+    } catch (e) {
+      showToast('Error uploading photo.', true);
+    }
+  });
+
+  async function deleteVariantImage(imageId) {
+    if (!confirm('Are you sure you want to delete this variant photo?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images/${imageId}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast('Photo deleted.');
+        await loadVariantPhotos();
+      } else {
+        showToast(json.message || 'Failed to delete photo.', true);
+      }
+    } catch (e) {
+      showToast('Error deleting photo.', true);
+    }
+  }
+
       } else showToast(json.message || 'Failed to update image.', true);
     } catch (e) {
       showToast('Something went wrong.', true);
@@ -1056,6 +1299,190 @@
       if (json.success) {
         showToast(json.message || 'Image deleted.');
         await loadImages();
+
+  // ==================== CUSTOM ATTRIBUTES & VALUES ====================
+  function toggleNewAttributeBox() {
+    const box = document.getElementById('newAttributeBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') document.getElementById('newAttributeNameInput').focus();
+  }
+
+  function toggleNewValueBox() {
+    const box = document.getElementById('newValueBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') document.getElementById('newValueNameInput').focus();
+  }
+
+  async function saveNewAttribute() {
+    const input = document.getElementById('newAttributeNameInput');
+    const name = input.value.trim();
+    if (!name) { showToast('Please enter an attribute name.', true); return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/attributes`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ name })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to save attribute.');
+
+      showToast('Custom attribute created successfully!');
+      input.value = '';
+      toggleNewAttributeBox();
+
+      await loadAttributeOptions();
+      if (json.data && json.data.id) {
+        document.getElementById('attrAttributeSelect').value = json.data.id;
+        populateValueDropdown();
+      }
+    } catch (e) {
+      showToast(e.message || 'Error creating attribute.', true);
+    }
+  }
+
+  async function saveNewValue() {
+    const attrId = document.getElementById('attrAttributeSelect').value;
+    if (!attrId) { showToast('Please select an attribute first.', true); return; }
+
+    const input = document.getElementById('newValueNameInput');
+    const value = input.value.trim();
+    if (!value) { showToast('Please enter a value.', true); return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/attribute-values`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ attribute_id: attrId, value })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to save attribute value.');
+
+      showToast('Custom value created successfully!');
+      input.value = '';
+      toggleNewValueBox();
+
+      await loadAttributeValueOptions();
+      if (json.data && json.data.id) {
+        document.getElementById('attrValueSelect').value = json.data.id;
+      }
+    } catch (e) {
+      showToast(e.message || 'Error creating value.', true);
+    }
+  }
+
+  // Hook populateValueDropdown to show/hide "+ Create New" value link
+  const originalPopulate = populateValueDropdown;
+  populateValueDropdown = function() {
+    originalPopulate();
+    const attrSel = document.getElementById('attrAttributeSelect');
+    const createValLink = document.getElementById('createNewValLink');
+    if (attrSel.value) {
+      createValLink.style.display = 'inline-block';
+    } else {
+      createValLink.style.display = 'none';
+    }
+  };
+
+  // ==================== VARIANT PHOTOS MODAL ====================
+  let activePhotoVariantId = null;
+
+  async function openVariantImagesModal(variantId) {
+    activePhotoVariantId = variantId;
+    const v = findVariantById(variantId);
+    document.getElementById('varPhotoSkuBadge').textContent = v ? (v.sku || ('Variant #' + v.id)) : '';
+    document.getElementById('variantPhotosModal').classList.add('open');
+    await loadVariantPhotos();
+  }
+
+  function closeVariantPhotosModal() {
+    activePhotoVariantId = null;
+    document.getElementById('variantPhotosModal').classList.remove('open');
+    loadVariants(); // Refresh variant list to update photo thumbnail
+  }
+
+  async function loadVariantPhotos() {
+    const grid = document.getElementById('varImagesGrid');
+    grid.innerHTML = '<div class="loading-state">Loading...</div>';
+
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images`, { headers: authHeaders() });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to load photos.');
+
+      const allImgs = json.data.data || json.data || [];
+      const varImgs = allImgs.filter(img => String(img.product_variant_id) === String(activePhotoVariantId));
+
+      if (!varImgs.length) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1; padding:20px 0;">No photos assigned to this variant yet. Upload one above.</div>';
+        return;
+      }
+
+      grid.innerHTML = varImgs.map(img => `
+        <div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; background:var(--bg-card); position:relative;">
+          <img src="${resolveImageSrc(img.image_url)}" style="width:100%; height:110px; object-fit:cover; display:block;" alt="">
+          <div style="padding:6px; text-align:center;">
+            <button class="btn btn-danger btn-sm" style="width:100%; font-size:11px; padding:3px 6px;" onclick="deleteVariantImage(${img.id})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">${e.message || 'Failed to load photos.'}</div>`;
+    }
+  }
+
+  document.getElementById('uploadVarImagesBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('varImageFileInput');
+    if (!fileInput.files || !fileInput.files.length) {
+      showToast('Please select at least one photo.', true);
+      return;
+    }
+
+    const formData = new FormData();
+    [...fileInput.files].forEach(f => formData.append('images[]', f));
+    formData.append('product_variant_id', activePhotoVariantId);
+    const alt = document.getElementById('varImageAltInput').value.trim();
+    if (alt) formData.append('alt_text', alt);
+
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
+        body: formData
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast('Photo uploaded for variant!');
+        fileInput.value = '';
+        document.getElementById('varImageAltInput').value = '';
+        await loadVariantPhotos();
+      } else {
+        showToast(json.message || 'Upload failed.', true);
+      }
+    } catch (e) {
+      showToast('Error uploading photo.', true);
+    }
+  });
+
+  async function deleteVariantImage(imageId) {
+    if (!confirm('Are you sure you want to delete this variant photo?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images/${imageId}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast('Photo deleted.');
+        await loadVariantPhotos();
+      } else {
+        showToast(json.message || 'Failed to delete photo.', true);
+      }
+    } catch (e) {
+      showToast('Error deleting photo.', true);
+    }
+  }
+
       } else showToast(json.message || 'Failed to delete image.', true);
     } catch (e) {
       showToast('Something went wrong.', true);
@@ -1086,6 +1513,190 @@
         filesInput.value = '';
         document.getElementById('imageAltInput').value = '';
         await loadImages();
+
+  // ==================== CUSTOM ATTRIBUTES & VALUES ====================
+  function toggleNewAttributeBox() {
+    const box = document.getElementById('newAttributeBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') document.getElementById('newAttributeNameInput').focus();
+  }
+
+  function toggleNewValueBox() {
+    const box = document.getElementById('newValueBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') document.getElementById('newValueNameInput').focus();
+  }
+
+  async function saveNewAttribute() {
+    const input = document.getElementById('newAttributeNameInput');
+    const name = input.value.trim();
+    if (!name) { showToast('Please enter an attribute name.', true); return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/attributes`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ name })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to save attribute.');
+
+      showToast('Custom attribute created successfully!');
+      input.value = '';
+      toggleNewAttributeBox();
+
+      await loadAttributeOptions();
+      if (json.data && json.data.id) {
+        document.getElementById('attrAttributeSelect').value = json.data.id;
+        populateValueDropdown();
+      }
+    } catch (e) {
+      showToast(e.message || 'Error creating attribute.', true);
+    }
+  }
+
+  async function saveNewValue() {
+    const attrId = document.getElementById('attrAttributeSelect').value;
+    if (!attrId) { showToast('Please select an attribute first.', true); return; }
+
+    const input = document.getElementById('newValueNameInput');
+    const value = input.value.trim();
+    if (!value) { showToast('Please enter a value.', true); return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/attribute-values`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ attribute_id: attrId, value })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to save attribute value.');
+
+      showToast('Custom value created successfully!');
+      input.value = '';
+      toggleNewValueBox();
+
+      await loadAttributeValueOptions();
+      if (json.data && json.data.id) {
+        document.getElementById('attrValueSelect').value = json.data.id;
+      }
+    } catch (e) {
+      showToast(e.message || 'Error creating value.', true);
+    }
+  }
+
+  // Hook populateValueDropdown to show/hide "+ Create New" value link
+  const originalPopulate = populateValueDropdown;
+  populateValueDropdown = function() {
+    originalPopulate();
+    const attrSel = document.getElementById('attrAttributeSelect');
+    const createValLink = document.getElementById('createNewValLink');
+    if (attrSel.value) {
+      createValLink.style.display = 'inline-block';
+    } else {
+      createValLink.style.display = 'none';
+    }
+  };
+
+  // ==================== VARIANT PHOTOS MODAL ====================
+  let activePhotoVariantId = null;
+
+  async function openVariantImagesModal(variantId) {
+    activePhotoVariantId = variantId;
+    const v = findVariantById(variantId);
+    document.getElementById('varPhotoSkuBadge').textContent = v ? (v.sku || ('Variant #' + v.id)) : '';
+    document.getElementById('variantPhotosModal').classList.add('open');
+    await loadVariantPhotos();
+  }
+
+  function closeVariantPhotosModal() {
+    activePhotoVariantId = null;
+    document.getElementById('variantPhotosModal').classList.remove('open');
+    loadVariants(); // Refresh variant list to update photo thumbnail
+  }
+
+  async function loadVariantPhotos() {
+    const grid = document.getElementById('varImagesGrid');
+    grid.innerHTML = '<div class="loading-state">Loading...</div>';
+
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images`, { headers: authHeaders() });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to load photos.');
+
+      const allImgs = json.data.data || json.data || [];
+      const varImgs = allImgs.filter(img => String(img.product_variant_id) === String(activePhotoVariantId));
+
+      if (!varImgs.length) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1; padding:20px 0;">No photos assigned to this variant yet. Upload one above.</div>';
+        return;
+      }
+
+      grid.innerHTML = varImgs.map(img => `
+        <div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; background:var(--bg-card); position:relative;">
+          <img src="${resolveImageSrc(img.image_url)}" style="width:100%; height:110px; object-fit:cover; display:block;" alt="">
+          <div style="padding:6px; text-align:center;">
+            <button class="btn btn-danger btn-sm" style="width:100%; font-size:11px; padding:3px 6px;" onclick="deleteVariantImage(${img.id})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">${e.message || 'Failed to load photos.'}</div>`;
+    }
+  }
+
+  document.getElementById('uploadVarImagesBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('varImageFileInput');
+    if (!fileInput.files || !fileInput.files.length) {
+      showToast('Please select at least one photo.', true);
+      return;
+    }
+
+    const formData = new FormData();
+    [...fileInput.files].forEach(f => formData.append('images[]', f));
+    formData.append('product_variant_id', activePhotoVariantId);
+    const alt = document.getElementById('varImageAltInput').value.trim();
+    if (alt) formData.append('alt_text', alt);
+
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
+        body: formData
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast('Photo uploaded for variant!');
+        fileInput.value = '';
+        document.getElementById('varImageAltInput').value = '';
+        await loadVariantPhotos();
+      } else {
+        showToast(json.message || 'Upload failed.', true);
+      }
+    } catch (e) {
+      showToast('Error uploading photo.', true);
+    }
+  });
+
+  async function deleteVariantImage(imageId) {
+    if (!confirm('Are you sure you want to delete this variant photo?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images/${imageId}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast('Photo deleted.');
+        await loadVariantPhotos();
+      } else {
+        showToast(json.message || 'Failed to delete photo.', true);
+      }
+    } catch (e) {
+      showToast('Error deleting photo.', true);
+    }
+  }
+
       } else {
         showToast(json.message || 'Failed to upload images.', true);
       }
@@ -1123,8 +1734,15 @@
       return;
     }
 
-    tbody.innerHTML = variants.map(v => `
+    tbody.innerHTML = variants.map(v => {
+      const vImg = v.primary_image || (v.images && v.images.length ? v.images[0] : null);
+      const thumbHtml = vImg ?
+        `<img src="${resolveImageSrc(vImg.image_url)}" style="width:38px; height:38px; object-fit:cover; border-radius:6px; border:1px solid var(--border-color); display:block;" alt="">` :
+        `<div style="width:38px; height:38px; background:var(--bg-card-hover); border-radius:6px; border:1px dashed var(--border-color-strong); display:flex; align-items:center; justify-content:center; color:var(--text-muted); font-size:11px;">—</div>`;
+
+      return `
             <tr>
+                <td>${thumbHtml}</td>
                 <td>${v.sku || '—'}</td>
                 <td>${v.barcode || '—'}</td>
                 <td>₹${Number(v.price).toLocaleString('en-IN')}</td>
@@ -1132,6 +1750,7 @@
                 <td>${v.is_active ? '<span class="badge status-active">Active</span>' : '<span class="badge status-inactive">Inactive</span>'}</td>
                 <td>
                     <div class="actions-cell">
+                        <button class="btn btn-outline btn-sm" onclick="openVariantImagesModal(${v.id})" title="Manage variant photos">📷 Photos</button>
                         <button class="btn btn-outline btn-sm" onclick="openAttributesModal(${v.id})">Attributes</button>
                         <button class="btn btn-outline btn-sm" onclick="openInventoryModal(${v.id})">Inventory</button>
                         <button class="btn btn-outline btn-sm" onclick="openVariantFormModal(${v.id})">Edit</button>
@@ -1139,7 +1758,8 @@
                     </div>
                 </td>
             </tr>
-        `).join('');
+        `;
+    }).join('');
   }
 
   function findVariantById(id) {
@@ -1612,6 +2232,190 @@
   });
   loadProduct();
   loadImages();
+
+  // ==================== CUSTOM ATTRIBUTES & VALUES ====================
+  function toggleNewAttributeBox() {
+    const box = document.getElementById('newAttributeBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') document.getElementById('newAttributeNameInput').focus();
+  }
+
+  function toggleNewValueBox() {
+    const box = document.getElementById('newValueBox');
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    if (box.style.display === 'block') document.getElementById('newValueNameInput').focus();
+  }
+
+  async function saveNewAttribute() {
+    const input = document.getElementById('newAttributeNameInput');
+    const name = input.value.trim();
+    if (!name) { showToast('Please enter an attribute name.', true); return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/attributes`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ name })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to save attribute.');
+
+      showToast('Custom attribute created successfully!');
+      input.value = '';
+      toggleNewAttributeBox();
+
+      await loadAttributeOptions();
+      if (json.data && json.data.id) {
+        document.getElementById('attrAttributeSelect').value = json.data.id;
+        populateValueDropdown();
+      }
+    } catch (e) {
+      showToast(e.message || 'Error creating attribute.', true);
+    }
+  }
+
+  async function saveNewValue() {
+    const attrId = document.getElementById('attrAttributeSelect').value;
+    if (!attrId) { showToast('Please select an attribute first.', true); return; }
+
+    const input = document.getElementById('newValueNameInput');
+    const value = input.value.trim();
+    if (!value) { showToast('Please enter a value.', true); return; }
+
+    try {
+      const res = await fetch(`${API_BASE}/attribute-values`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ attribute_id: attrId, value })
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to save attribute value.');
+
+      showToast('Custom value created successfully!');
+      input.value = '';
+      toggleNewValueBox();
+
+      await loadAttributeValueOptions();
+      if (json.data && json.data.id) {
+        document.getElementById('attrValueSelect').value = json.data.id;
+      }
+    } catch (e) {
+      showToast(e.message || 'Error creating value.', true);
+    }
+  }
+
+  // Hook populateValueDropdown to show/hide "+ Create New" value link
+  const originalPopulate = populateValueDropdown;
+  populateValueDropdown = function() {
+    originalPopulate();
+    const attrSel = document.getElementById('attrAttributeSelect');
+    const createValLink = document.getElementById('createNewValLink');
+    if (attrSel.value) {
+      createValLink.style.display = 'inline-block';
+    } else {
+      createValLink.style.display = 'none';
+    }
+  };
+
+  // ==================== VARIANT PHOTOS MODAL ====================
+  let activePhotoVariantId = null;
+
+  async function openVariantImagesModal(variantId) {
+    activePhotoVariantId = variantId;
+    const v = findVariantById(variantId);
+    document.getElementById('varPhotoSkuBadge').textContent = v ? (v.sku || ('Variant #' + v.id)) : '';
+    document.getElementById('variantPhotosModal').classList.add('open');
+    await loadVariantPhotos();
+  }
+
+  function closeVariantPhotosModal() {
+    activePhotoVariantId = null;
+    document.getElementById('variantPhotosModal').classList.remove('open');
+    loadVariants(); // Refresh variant list to update photo thumbnail
+  }
+
+  async function loadVariantPhotos() {
+    const grid = document.getElementById('varImagesGrid');
+    grid.innerHTML = '<div class="loading-state">Loading...</div>';
+
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images`, { headers: authHeaders() });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.message || 'Failed to load photos.');
+
+      const allImgs = json.data.data || json.data || [];
+      const varImgs = allImgs.filter(img => String(img.product_variant_id) === String(activePhotoVariantId));
+
+      if (!varImgs.length) {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1; padding:20px 0;">No photos assigned to this variant yet. Upload one above.</div>';
+        return;
+      }
+
+      grid.innerHTML = varImgs.map(img => `
+        <div style="border:1px solid var(--border-color); border-radius:8px; overflow:hidden; background:var(--bg-card); position:relative;">
+          <img src="${resolveImageSrc(img.image_url)}" style="width:100%; height:110px; object-fit:cover; display:block;" alt="">
+          <div style="padding:6px; text-align:center;">
+            <button class="btn btn-danger btn-sm" style="width:100%; font-size:11px; padding:3px 6px;" onclick="deleteVariantImage(${img.id})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    } catch (e) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">${e.message || 'Failed to load photos.'}</div>`;
+    }
+  }
+
+  document.getElementById('uploadVarImagesBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('varImageFileInput');
+    if (!fileInput.files || !fileInput.files.length) {
+      showToast('Please select at least one photo.', true);
+      return;
+    }
+
+    const formData = new FormData();
+    [...fileInput.files].forEach(f => formData.append('images[]', f));
+    formData.append('product_variant_id', activePhotoVariantId);
+    const alt = document.getElementById('varImageAltInput').value.trim();
+    if (alt) formData.append('alt_text', alt);
+
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'application/json' },
+        body: formData
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast('Photo uploaded for variant!');
+        fileInput.value = '';
+        document.getElementById('varImageAltInput').value = '';
+        await loadVariantPhotos();
+      } else {
+        showToast(json.message || 'Upload failed.', true);
+      }
+    } catch (e) {
+      showToast('Error uploading photo.', true);
+    }
+  });
+
+  async function deleteVariantImage(imageId) {
+    if (!confirm('Are you sure you want to delete this variant photo?')) return;
+    try {
+      const res = await fetch(`${API_BASE}/products/${PRODUCT_ID}/images/${imageId}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (json.success) {
+        showToast('Photo deleted.');
+        await loadVariantPhotos();
+      } else {
+        showToast(json.message || 'Failed to delete photo.', true);
+      }
+    } catch (e) {
+      showToast('Error deleting photo.', true);
+    }
+  }
+
   loadVariants();
 </script>
 @endpush

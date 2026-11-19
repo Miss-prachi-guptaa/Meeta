@@ -38,6 +38,12 @@ class StoreProductImageRequest extends FormRequest
                 'string',
                 'max:255',
             ],
+
+            'product_variant_id' => [
+                'nullable',
+                'integer',
+                'exists:product_variants,id',
+            ],
         ];
     }
 }

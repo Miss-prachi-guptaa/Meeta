@@ -26,7 +26,7 @@ class ProductImageService
     /**
      * Upload Product Images
      */
-    public function upload(Product $product, array $files, ?string $altText = null)
+    public function upload(Product $product, array $files, ?string $altText = null, ?int $productVariantId = null)
     {
         $images = [];
 
@@ -39,10 +39,11 @@ class ProductImageService
 
             $images[] = $this->productImageRepository->create([
                 'product_id' => $product->id,
+                'product_variant_id' => $productVariantId,
                 'image_url' => $uploadedFile['file_path'],
                 'alt_text' => $altText,
                 'sort_order' => $this->productImageRepository->getNextSortOrder($product),
-                'is_primary' => !$this->productImageRepository->hasPrimaryImage($product),
+                'is_primary' => $productVariantId ? false : !$this->productImageRepository->hasPrimaryImage($product),
             ]);
         }
 

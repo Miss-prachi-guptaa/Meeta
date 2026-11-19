@@ -182,6 +182,16 @@ Route::middleware('auth:sanctum')
             VendorCatalogController::class,
             'attributeValues',
         ]);
+
+        Route::post('/attributes', [
+            VendorCatalogController::class,
+            'storeAttribute',
+        ]);
+
+        Route::post('/attribute-values', [
+            VendorCatalogController::class,
+            'storeAttributeValue',
+        ]);
         /*
 |--------------------------------------------------------------------------
 | Product Images

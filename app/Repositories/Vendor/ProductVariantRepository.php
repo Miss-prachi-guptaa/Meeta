@@ -12,7 +12,7 @@ class ProductVariantRepository
      */
     public function getAll(Product $product)
     {
-        return ProductVariant::where('product_id', $product->id)
+        return ProductVariant::with(['images', 'attributeValues'])->where('product_id', $product->id)
             ->latest()
             ->get();
     }

@@ -56,7 +56,8 @@ class ProductImageController extends Controller
             $images = $this->productImageService->upload(
                 $product,
                 $request->file('images'),
-                $request->input('alt_text')
+                $request->input('alt_text'),
+                $request->input('product_variant_id') ? (int) $request->input('product_variant_id') : null
             );
 
             return response()->json([

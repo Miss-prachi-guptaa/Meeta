@@ -31,6 +31,16 @@ class ProductVariantResource extends JsonResource
 
             'is_active' => $this->is_active,
 
+            'images' => ProductImageResource::collection($this->whenLoaded('images')),
+            'primary_image' => $this->whenLoaded('images', function () {
+                $img = $this->images->firstWhere('is_primary', true) ?? $this->images->first();
+                return $img ? [
+                    'id' => $img->id,
+                    'image_url' => $img->public_url,
+                    'alt_text' => $img->alt_text,
+                ] : null;
+            }),
+
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
