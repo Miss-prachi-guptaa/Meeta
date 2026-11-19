@@ -31,6 +31,29 @@ class Controller
                 'message' => 'Resource not found.',
             ], 404);
 
+        } catch (\Illuminate\Database\QueryException $e) {
+
+            Log::error('Database Exception', [
+                'message' => $e->getMessage(),
+                'sql' => $e->getSql(),
+            ]);
+
+            $message = 'A database error occurred. Please check that all required fields are filled.';
+            if (str_contains($e->getMessage(), 'cannot be null')) {
+                preg_match("/Column '([^']+)' cannot be null/", $e->getMessage(), $matches);
+                $col = $matches[1] ?? 'A required field';
+                $fieldLabel = ucwords(str_replace('_', ' ', $col));
+                $message = "{$fieldLabel} is required and cannot be left blank.";
+            } elseif (str_contains($e->getMessage(), 'Duplicate entry')) {
+                $message = 'A record with this unique value (such as SKU or barcode) already exists.';
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'error_detail' => app()->isLocal() ? $e->getMessage() : null,
+            ], 422);
+
         } catch (Throwable $e) {
 
             Log::error('API Exception', [
@@ -40,18 +63,10 @@ class Controller
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            if (app()->isLocal()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                ], 500);
-            }
-
             return response()->json([
                 'success' => false,
-                'message' => 'Server Error',
+                'message' => 'Something went wrong while processing your request. Please try again.',
+                'error_detail' => app()->isLocal() ? $e->getMessage() : null,
             ], 500);
         }
     }

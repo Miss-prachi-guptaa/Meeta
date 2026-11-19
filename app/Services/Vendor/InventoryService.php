@@ -44,6 +44,13 @@ class InventoryService
             ]);
         }
 
+        // Default null values to 0 for database integrity
+        $data['reserved_quantity'] = (int) ($data['reserved_quantity'] ?? 0);
+        $data['minimum_stock'] = (int) ($data['minimum_stock'] ?? 0);
+        if (empty($data['maximum_stock'])) {
+            $data['maximum_stock'] = null;
+        }
+
         $this->validateStock($data);
 
         $data['product_variant_id'] = $variant->id;
@@ -63,6 +70,12 @@ class InventoryService
             $inventory->toArray(),
             $data
         );
+
+        $data['reserved_quantity'] = (int) ($data['reserved_quantity'] ?? 0);
+        $data['minimum_stock'] = (int) ($data['minimum_stock'] ?? 0);
+        if (empty($data['maximum_stock'])) {
+            $data['maximum_stock'] = null;
+        }
 
         $this->validateStock($data);
 

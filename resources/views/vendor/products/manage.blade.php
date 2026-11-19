@@ -2158,7 +2158,7 @@
     const payload = {
       quantity: parseInt(quantity, 10),
       reserved_quantity: parseInt(document.getElementById('invReserved').value || 0, 10),
-      minimum_stock: document.getElementById('invMin').value ? parseInt(document.getElementById('invMin').value, 10) : null,
+      minimum_stock: parseInt(document.getElementById('invMin').value || 0, 10),
       maximum_stock: document.getElementById('invMax').value ? parseInt(document.getElementById('invMax').value, 10) : null,
     };
 
