@@ -30,7 +30,7 @@ class StoreProductImageRequest extends FormRequest
                 'required',
                 'image',
                 'mimes:jpg,jpeg,png,webp',
-                'max:2048',
+                'max:10240',
             ],
 
             'alt_text' => [
