@@ -49,6 +49,7 @@ class OrderController extends Controller
     {
         return $this->execute(function () use ($request, $subOrder) {
             $order = $this->ownedOrder($request, $subOrder)->load([
+                'vendor:id,user_id,store_name,business_name,gst_number,support_email,support_phone',
                 'order:id,order_number,user_id,shipping_full_name,shipping_phone,shipping_address_line_1,shipping_address_line_2,shipping_landmark,shipping_city,shipping_state,shipping_country,shipping_postal_code,subtotal,shipping_amount,total_amount,payment_status,order_status,notes,created_at',
                 'orderItems.product.images', 'shipments.tracking' => fn ($query) => $query->orderBy('tracked_at'),
             ]);
@@ -122,20 +123,39 @@ class OrderController extends Controller
                     throw ValidationException::withMessages(['order' => ['A shipment already exists for this order.']]);
                 }
 
+                $partner = $data['shipping_partner'] ?? 'Delhivery Surface';
+                $partnerCode = match (true) {
+                    str_contains(strtolower($partner), 'blue') => 'BLUD',
+                    str_contains(strtolower($partner), 'shadow') => 'SFX',
+                    str_contains(strtolower($partner), 'dtdc') => 'DTDC',
+                    str_contains(strtolower($partner), 'post') => 'INP',
+                    default => 'DLHV',
+                };
+                $trackingNum = $partnerCode . now()->format('ymd') . strtoupper(Str::random(7));
+
+                $trackingUrl = match ($partnerCode) {
+                    'BLUD' => "https://www.bluedart.com/tracking?trackNumber={$trackingNum}",
+                    'SFX' => "https://shadowfax.in/track?orderId={$trackingNum}",
+                    'DTDC' => "https://www.dtdc.in/tracking.asp?trkType=AWB&strAwNo={$trackingNum}",
+                    'INP' => "https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx?consNo={$trackingNum}",
+                    default => "https://www.delhivery.com/track/package/{$trackingNum}",
+                };
+
                 $shipment = $order->shipments()->create([
                     'shipment_number' => 'SHP-'.strtoupper(Str::random(14)),
-                    'provider' => 'dummy',
-                    'shipping_partner' => $data['shipping_partner'] ?? 'Dummy Logistics',
-                    'tracking_number' => 'DUM'.now()->format('ymd').strtoupper(Str::random(8)),
+                    'provider' => 'courier',
+                    'shipping_partner' => $partner,
+                    'tracking_number' => $trackingNum,
+                    'tracking_url' => $trackingUrl,
                     'status' => 'ready_for_pickup',
                     'package_weight' => $data['weight'],
                     'package_length' => $data['length'],
                     'package_width' => $data['width'],
                     'package_height' => $data['height'],
-                    'expected_delivery_at' => $data['expected_delivery_at'] ?? null,
+                    'expected_delivery_at' => $data['expected_delivery_at'] ?? now()->addDays(4),
                     'remarks' => $data['remarks'] ?? null,
                 ]);
-                $shipment->tracking()->create(['status' => 'ready_for_pickup', 'description' => 'Package is ready for third-party courier pickup.', 'tracked_at' => now()]);
+                $shipment->tracking()->create(['status' => 'ready_for_pickup', 'description' => "Manifest generated for {$partner}. Awaiting pickup by courier executive.", 'tracked_at' => now()]);
                 $order->update(['order_status' => 'ready_to_ship']);
                 $this->lifecycle->syncParentOrder($order->order);
                 $this->lifecycle->notifyCustomer($order, 'Order packed', "{$order->sub_order_number} is packed and ready for pickup.", 'order_ready_to_ship');
@@ -161,8 +181,8 @@ class OrderController extends Controller
 
             $updated = DB::transaction(function () use ($request, $shipment, $data) {
                 $model = Shipment::whereKey($shipment)->whereHas('subOrder', fn ($query) => $query->where('vendor_id', $this->vendor($request)->id))->lockForUpdate()->firstOrFail();
-                if ($model->provider !== 'dummy') {
-                    throw ValidationException::withMessages(['shipment' => ['Real provider shipments can only be updated by their courier webhook.']]);
+                if (!in_array($model->provider, ['dummy', 'courier'])) {
+                    throw ValidationException::withMessages(['shipment' => ['This shipment can only be updated by the courier integration.']]);
                 }
                 $allowed = ['ready_for_pickup' => 'picked_up', 'picked_up' => 'in_transit', 'in_transit' => 'out_for_delivery', 'out_for_delivery' => 'delivered'];
                 if (($allowed[$model->status] ?? null) !== $data['status']) {
