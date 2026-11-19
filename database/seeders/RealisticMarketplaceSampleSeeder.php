@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\ProductVariant;
 use App\Models\ReturnModel;
 use App\Models\ReturnItem;
@@ -219,6 +220,11 @@ class RealisticMarketplaceSampleSeeder extends Seeder
             ['quantity' => 45, 'minimum_stock' => 5]
         );
 
+        ProductImage::firstOrCreate(
+            ['product_id' => $product1->id, 'image_url' => '/images/catalog/indigo-block-print-cushion-1.webp'],
+            ['alt_text' => 'Hand Block Printed Indigo Kurta Fabric', 'is_primary' => true, 'sort_order' => 1]
+        );
+
         $product2 = Product::firstOrCreate(
             ['slug' => 'terracotta-clay-diffuser-vase'],
             [
@@ -243,6 +249,11 @@ class RealisticMarketplaceSampleSeeder extends Seeder
         Inventory::updateOrCreate(
             ['product_variant_id' => $variant2->id],
             ['quantity' => 20, 'minimum_stock' => 2]
+        );
+
+        ProductImage::firstOrCreate(
+            ['product_id' => $product2->id, 'image_url' => '/images/catalog/warli-terracotta-planter-1.webp'],
+            ['alt_text' => 'Handcrafted Terracotta Aroma Diffuser Vase', 'is_primary' => true, 'sort_order' => 1]
         );
 
         // Product 3: Pending Approval Product (so Product Approval screen shows sample)
