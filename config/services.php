@@ -14,6 +14,11 @@ return [
     |
     */
 
+    'razorpay' => [
+        'key' => env('RAZORPAY_KEY', 'rzp_test_U22eR6wxgCQWKb'),
+        'secret' => env('RAZORPAY_SECRET', 'Yxxq4VSvkCyR8Y0c8nFAC5OE'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
