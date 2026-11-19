@@ -12,6 +12,7 @@ use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -57,7 +58,7 @@ class CheckoutController extends Controller
                     'shipping_address_line_2' => $address->address_line_2, 'shipping_landmark' => $address->landmark, 'shipping_city' => $address->city,
                     'shipping_state' => $address->state, 'shipping_country' => $address->country, 'shipping_postal_code' => $address->postal_code,
                     'subtotal' => $summary['subtotal'], 'discount_amount' => 0, 'tax_amount' => 0, 'shipping_amount' => $summary['shipping_amount'],
-                    'total_amount' => $summary['total'], 'payment_status' => 'pending', 'order_status' => 'confirmed', 'notes' => $data['notes'] ?? null,
+                    'total_amount' => $summary['total'], 'payment_status' => ($data['payment_method'] === 'razorpay' ? 'paid' : 'pending'), 'order_status' => 'confirmed', 'notes' => $data['notes'] ?? null,
                 ]);
 
                 foreach ($items->groupBy(fn ($item) => $item->productVariant->product->vendor_id) as $vendorId => $vendorItems) {
@@ -79,10 +80,34 @@ class CheckoutController extends Controller
                     }
                 }
 
-                Payment::create([
-                    'payment_number' => 'PAY-'.strtoupper(Str::random(12)), 'order_id' => $order->id, 'user_id' => $request->user()->id,
-                    'amount' => $summary['total'], 'currency' => 'INR', 'payment_method' => 'cod', 'status' => 'pending',
+                $isRzp = ($data['payment_method'] === 'razorpay');
+                $payment = Payment::create([
+                    'payment_number' => 'PAY-'.strtoupper(Str::random(12)),
+                    'order_id' => $order->id,
+                    'user_id' => $request->user()->id,
+                    'amount' => $summary['total'],
+                    'currency' => 'INR',
+                    'payment_method' => $data['payment_method'],
+                    'status' => $isRzp ? 'completed' : 'pending',
+                    'paid_at' => $isRzp ? now() : null,
                 ]);
+
+                if ($isRzp && !empty($data['razorpay_payment_id'])) {
+                    \App\Models\PaymentTransaction::create([
+                        'payment_id' => $payment->id,
+                        'transaction_id' => $data['razorpay_payment_id'],
+                        'gateway' => 'razorpay',
+                        'transaction_type' => 'payment',
+                        'amount' => $summary['total'],
+                        'status' => 'success',
+                        'gateway_response' => [
+                            'razorpay_payment_id' => $data['razorpay_payment_id'],
+                            'razorpay_order_id' => $data['razorpay_order_id'] ?? null,
+                            'razorpay_signature' => $data['razorpay_signature'] ?? null,
+                        ],
+                        'processed_at' => now(),
+                    ]);
+                }
                 if ($context['mode'] === 'cart') {
                     $context['cart']->items()->delete();
                 }
@@ -118,7 +143,10 @@ class CheckoutController extends Controller
             'quantity' => ['nullable', 'required_if:mode,buy_now', 'integer', 'min:1', 'max:99'],
             'shipping_method' => [$placingOrder ? 'required' : 'nullable', Rule::in(['standard', 'express'])],
             'address_id' => [$placingOrder ? 'required' : 'nullable', 'integer'],
-            'payment_method' => [$placingOrder ? 'required' : 'nullable', Rule::in(['cod'])],
+            'payment_method' => [$placingOrder ? 'required' : 'nullable', Rule::in(['cod', 'razorpay'])],
+            'razorpay_payment_id' => ['nullable', 'string', 'required_if:payment_method,razorpay'],
+            'razorpay_order_id' => ['nullable', 'string'],
+            'razorpay_signature' => ['nullable', 'string'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
     }
@@ -186,5 +214,50 @@ class CheckoutController extends Controller
         $sale = $variant->sale_price === null ? null : (float) $variant->sale_price;
 
         return $sale && $sale < $price ? $sale : $price;
+    }
+
+    public function createRazorpayOrder(Request $request)
+    {
+        return $this->execute(function () use ($request) {
+            $data = $this->validatedCheckout($request, false);
+            $context = $this->checkoutContext($request, $data);
+            $summary = $this->summary($context['items'], $data['shipping_method'] ?? 'standard', $context['mode']);
+
+            $amountInPaise = (int) round($summary['total'] * 100);
+            $receipt = 'RCPT-' . strtoupper(Str::random(10));
+
+            $key = config('services.razorpay.key');
+            $secret = config('services.razorpay.secret');
+
+            if (!$key || !$secret) {
+                throw ValidationException::withMessages(['razorpay' => ['Razorpay credentials not configured.']]);
+            }
+
+            $response = Http::withBasicAuth($key, $secret)
+                ->post('https://api.razorpay.com/v1/orders', [
+                    'amount' => $amountInPaise,
+                    'currency' => 'INR',
+                    'receipt' => $receipt,
+                    'payment_capture' => 1,
+                ]);
+
+            if (!$response->successful()) {
+                throw ValidationException::withMessages(['razorpay' => ['Failed to initiate Razorpay order: ' . ($response->json('error.description') ?? $response->body())]]);
+            }
+
+            $rzpOrder = $response->json();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Razorpay order created.',
+                'data' => [
+                    'razorpay_order_id' => $rzpOrder['id'],
+                    'amount' => $rzpOrder['amount'],
+                    'currency' => $rzpOrder['currency'],
+                    'key' => $key,
+                    'order_summary' => $summary,
+                ],
+            ]);
+        });
     }
 }

@@ -327,6 +327,7 @@ Route::middleware('auth:sanctum')->prefix('customer')->group(function () {
     Route::patch('/addresses/{address}/default', [AddressController::class, 'makeDefault']);
 
     Route::get('/checkout', [CheckoutController::class, 'preview']);
+    Route::post('/checkout/create-razorpay-order', [CheckoutController::class, 'createRazorpayOrder']);
     Route::post('/checkout/place-order', [CheckoutController::class, 'placeOrder']);
     Route::get('/orders', [OrderController::class, 'index']);
     Route::get('/orders/{order}', [OrderController::class, 'show']);
