@@ -52,6 +52,6 @@ fetch('/api/customer/categories').then(r=>{if(!r.ok)throw Error();return r.json(
  const live=r.data||[],slugs=new Set(live.map(i=>i.slug));
  cards([...live,...fallback.filter(i=>!slugs.has(i.slug))].slice(0,9));
 }).catch(()=>{error.classList.remove('hidden');cards(fallback)}).finally(()=>loading.classList.add('hidden'));
-document.getElementById('search').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.value.trim())location.href='/api/customer/products?search='+encodeURIComponent(e.target.value.trim())});
+document.getElementById('search').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.value.trim())location.href='/shop?search='+encodeURIComponent(e.target.value.trim())});
 </script>
 </body></html>
