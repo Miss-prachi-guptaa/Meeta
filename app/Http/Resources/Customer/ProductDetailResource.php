@@ -31,7 +31,9 @@ class ProductDetailResource extends JsonResource
             'description' => $this->description,
             'images' => $this->images->map(fn ($image) => ['id' => $image->id, 'url' => $image->public_url, 'alt_text' => $image->alt_text, 'is_primary' => $image->is_primary]),
             'variants' => $this->variants->map(fn ($variant) => [
-                'id' => $variant->id, 'name' => $variant->name, 'sku' => $variant->sku,
+                'id' => $variant->id,
+                'name' => $variant->name ?: ($variant->attributeValues->pluck('value')->implode(' / ') ?: 'Standard'),
+                'sku' => $variant->sku,
                 'price' => (float) $variant->price, 'sale_price' => $variant->sale_price !== null ? (float) $variant->sale_price : null,
                 'effective_price' => $this->effectivePrice($variant),
                 'in_stock' => $variant->inventory && ($variant->inventory->quantity - $variant->inventory->reserved_quantity) > 0,
