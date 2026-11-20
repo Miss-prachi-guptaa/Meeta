@@ -33,8 +33,8 @@ class OrderController extends Controller
             $slaCutoff = Carbon::now()->subHours(24);
 
             $query = Order::with([
-                'user:id,name,email,phone',
-                'subOrders.vendor:id,store_name,contact_number,email',
+                'user:id,first_name,last_name,email,phone',
+                'subOrders.vendor:id,store_name,support_phone,support_email',
                 'subOrders.orderItems:id,sub_order_id,product_name,variant_name,sku,quantity,unit_price,total_amount',
                 'subOrders.shipments.tracking',
                 'payments',
@@ -137,8 +137,8 @@ class OrderController extends Controller
     {
         return $this->execute(function () use ($id) {
             $order = Order::with([
-                'user:id,name,email,phone',
-                'subOrders.vendor:id,store_name,contact_number,email',
+                'user:id,first_name,last_name,email,phone',
+                'subOrders.vendor:id,store_name,support_phone,support_email',
                 'subOrders.orderItems.product.images',
                 'subOrders.orderItems.productVariant',
                 'subOrders.shipments.tracking' => fn ($q) => $q->orderBy('tracked_at', 'desc'),
